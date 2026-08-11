@@ -1,6 +1,6 @@
 # Jaxongirman admin
 
-Responsive Vite/React operations console for authorized Jaxongirman administrators. It includes production metrics, user credit and block controls, presentation diagnostics, AI provider usage, database-driven pricing/settings, and immutable audit history.
+Responsive Vite/React operations console for authorized Jaxongirman administrators. It includes production metrics, user credit and block controls, presentation diagnostics, AI provider usage, database-driven pricing/settings, O‘yingoh curation and live-match supervision, and immutable audit history.
 
 The client uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Admin access and mutations are checked server-side by Supabase RLS and edge functions — this repo holds no privileged credential.
 
