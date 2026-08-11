@@ -1608,6 +1608,123 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          attempt_expires_at: string | null
+          buyer_fee: number
+          buyer_fee_rate: number
+          cancelled_at: string | null
+          coin_package_id: string | null
+          created_at: string
+          currency: string
+          expires_at: string
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          is_test: boolean
+          metadata: Json
+          order_number: string
+          paid_at: string | null
+          payme_receipt_id: string | null
+          payme_transaction_id: string | null
+          platform_revenue: number
+          product_id: string | null
+          provider_card_token: string | null
+          purpose: Database["public"]["Enums"]["order_purpose"]
+          reference_code: string | null
+          seller_fee: number
+          seller_fee_rate: number
+          seller_id: string | null
+          seller_net: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_expires_at?: string | null
+          buyer_fee?: number
+          buyer_fee_rate?: number
+          cancelled_at?: string | null
+          coin_package_id?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          is_test?: boolean
+          metadata?: Json
+          order_number?: string
+          paid_at?: string | null
+          payme_receipt_id?: string | null
+          payme_transaction_id?: string | null
+          platform_revenue?: number
+          product_id?: string | null
+          provider_card_token?: string | null
+          purpose: Database["public"]["Enums"]["order_purpose"]
+          reference_code?: string | null
+          seller_fee?: number
+          seller_fee_rate?: number
+          seller_id?: string | null
+          seller_net?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_expires_at?: string | null
+          buyer_fee?: number
+          buyer_fee_rate?: number
+          cancelled_at?: string | null
+          coin_package_id?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          is_test?: boolean
+          metadata?: Json
+          order_number?: string
+          paid_at?: string | null
+          payme_receipt_id?: string | null
+          payme_transaction_id?: string | null
+          platform_revenue?: number
+          product_id?: string | null
+          provider_card_token?: string | null
+          purpose?: Database["public"]["Enums"]["order_purpose"]
+          reference_code?: string | null
+          seller_fee?: number
+          seller_fee_rate?: number
+          seller_id?: string | null
+          seller_net?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_coin_package_id_fkey"
+            columns: ["coin_package_id"]
+            isOneToOne: false
+            referencedRelation: "coin_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       palette_families: {
         Row: {
           code: string
@@ -1732,6 +1849,7 @@ export type Database = {
           id: string
           idempotency_key: string
           is_sandbox: boolean
+          order_id: string | null
           paid_at: string | null
           partial_card_id: string | null
           platform_gross: number
@@ -1762,6 +1880,7 @@ export type Database = {
           id?: string
           idempotency_key: string
           is_sandbox?: boolean
+          order_id?: string | null
           paid_at?: string | null
           partial_card_id?: string | null
           platform_gross: number
@@ -1792,6 +1911,7 @@ export type Database = {
           id?: string
           idempotency_key?: string
           is_sandbox?: boolean
+          order_id?: string | null
           paid_at?: string | null
           partial_card_id?: string | null
           platform_gross?: number
@@ -1810,6 +1930,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_transactions_partial_card_id_fkey"
             columns: ["partial_card_id"]
@@ -3490,6 +3617,21 @@ export type Database = {
         }
       }
       admin_module_overview: { Args: { p_module_code?: string }; Returns: Json }
+      admin_order_reconciliation: {
+        Args: never
+        Returns: {
+          concern: string
+          created_at: string
+          id: string
+          order_number: string
+          payme_receipt_id: string
+          purpose: Database["public"]["Enums"]["order_purpose"]
+          status: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          user_email: string
+        }[]
+      }
+      admin_payment_test_mode: { Args: never; Returns: Json }
       admin_pending_payouts: {
         Args: never
         Returns: {
@@ -3575,6 +3717,23 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_set_ios_payment_policy: {
+        Args: { p_copy?: Json; p_reason?: string; p_review_mode: boolean }
+        Returns: Json
+      }
+      admin_set_payment_test_mode: {
+        Args: {
+          p_emails?: string[]
+          p_enabled: boolean
+          p_max_amount?: number
+          p_reason?: string
+        }
+        Returns: Json
+      }
+      admin_set_subscription_plans: {
+        Args: { p_currency?: string; p_plans: Json; p_reason?: string }
+        Returns: Json
       }
       admin_set_survey_status: {
         Args: {
@@ -3734,6 +3893,10 @@ export type Database = {
       }
       assert_module_access: {
         Args: { p_module_code: string; p_role: string }
+        Returns: undefined
+      }
+      assert_payment_allowed: {
+        Args: { p_context?: string; p_platform?: string }
         Returns: undefined
       }
       create_survey_from_template: {
@@ -3934,6 +4097,7 @@ export type Database = {
         Args: {
           p_idempotency_key: string
           p_partial_card_id?: string
+          p_platform?: string
           p_product_id: string
         }
         Returns: Json
@@ -4015,13 +4179,141 @@ export type Database = {
         Returns: Json
       }
       module_access_state: { Args: { p_module_code?: string }; Returns: Json }
+      my_orders: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          currency: string
+          order_number: string
+          paid_at: string
+          purpose: Database["public"]["Enums"]["order_purpose"]
+          status: Database["public"]["Enums"]["order_status"]
+          title: string
+          total_amount: number
+        }[]
+      }
       my_surveys: { Args: never; Returns: Json }
+      next_order_number: { Args: never; Returns: string }
       normalize_uz_phone: { Args: { p_value: string }; Returns: string }
       notify_upcoming_settlements: {
         Args: { p_days_ahead?: number }
         Returns: number
       }
       open_survey: { Args: { p_form_id: string }; Returns: Json }
+      order_advance: {
+        Args: {
+          p_failure_code?: string
+          p_failure_message?: string
+          p_order_id: string
+          p_to: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: boolean
+      }
+      order_clear_attempt_token: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
+      order_create_jcoin: {
+        Args: { p_package_id: string; p_platform?: string }
+        Returns: Json
+      }
+      order_create_marketplace: {
+        Args: { p_platform?: string; p_product_id: string }
+        Returns: Json
+      }
+      order_create_module: {
+        Args: { p_module_code?: string; p_platform?: string }
+        Returns: Json
+      }
+      order_create_subscription: {
+        Args: { p_plan_code: string; p_platform?: string }
+        Returns: Json
+      }
+      order_fail: {
+        Args: { p_code: string; p_message: string; p_order_id: string }
+        Returns: boolean
+      }
+      order_find_open: {
+        Args: {
+          p_coin_package_id?: string
+          p_product_id?: string
+          p_purpose: Database["public"]["Enums"]["order_purpose"]
+          p_reference_code?: string
+          p_user_id: string
+        }
+        Returns: {
+          attempt_expires_at: string | null
+          buyer_fee: number
+          buyer_fee_rate: number
+          cancelled_at: string | null
+          coin_package_id: string | null
+          created_at: string
+          currency: string
+          expires_at: string
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          is_test: boolean
+          metadata: Json
+          order_number: string
+          paid_at: string | null
+          payme_receipt_id: string | null
+          payme_transaction_id: string | null
+          platform_revenue: number
+          product_id: string | null
+          provider_card_token: string | null
+          purpose: Database["public"]["Enums"]["order_purpose"]
+          reference_code: string | null
+          seller_fee: number
+          seller_fee_rate: number
+          seller_id: string | null
+          seller_net: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      order_fulfil: {
+        Args: {
+          p_order_id: string
+          p_payme_receipt_id?: string
+          p_payme_transaction_id?: string
+          p_provider_cost?: number
+        }
+        Returns: Json
+      }
+      order_mark_test: { Args: { p_order_id: string }; Returns: undefined }
+      order_purpose_for_material: {
+        Args: { p_material_type: string }
+        Returns: Database["public"]["Enums"]["order_purpose"]
+      }
+      order_set_attempt_token: {
+        Args: { p_minutes?: number; p_order_id: string; p_token: string }
+        Returns: undefined
+      }
+      order_summary: {
+        Args: { p_order: Database["public"]["Tables"]["orders"]["Row"] }
+        Returns: Json
+      }
+      order_take_attempt_token: {
+        Args: { p_order_id: string }
+        Returns: string
+      }
+      order_transition_allowed: {
+        Args: {
+          p_from: Database["public"]["Enums"]["order_status"]
+          p_to: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: boolean
+      }
       payment_advance: {
         Args: {
           p_event?: string
@@ -4044,6 +4336,7 @@ export type Database = {
           id: string
           idempotency_key: string
           is_sandbox: boolean
+          order_id: string | null
           paid_at: string | null
           partial_card_id: string | null
           platform_gross: number
@@ -4083,6 +4376,7 @@ export type Database = {
           id: string
           idempotency_key: string
           is_sandbox: boolean
+          order_id: string | null
           paid_at: string | null
           partial_card_id: string | null
           platform_gross: number
@@ -4111,6 +4405,7 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: undefined
       }
+      payment_policy: { Args: { p_platform?: string }; Returns: Json }
       payment_set_attempt_token: {
         Args: { p_minutes?: number; p_token: string; p_transaction_id: string }
         Returns: undefined
@@ -4119,11 +4414,19 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: string
       }
+      payment_test_mode_for: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
       payment_transition_allowed: {
         Args: {
           p_from: Database["public"]["Enums"]["payment_state"]
           p_to: Database["public"]["Enums"]["payment_state"]
         }
+        Returns: boolean
+      }
+      payments_blocked_for_platform: {
+        Args: { p_platform?: string }
         Returns: boolean
       }
       pptx_import_fail: {
@@ -4326,6 +4629,7 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: Json
       }
+      purge_stale_orders: { Args: never; Returns: number }
       record_survey_export: {
         Args: {
           p_form_id: string
@@ -4507,6 +4811,7 @@ export type Database = {
         | "game_reward_reserve"
         | "game_reward"
         | "game_reward_refund"
+        | "coin_purchase"
       element_type:
         | "text"
         | "image"
@@ -4586,6 +4891,26 @@ export type Database = {
         | "refund"
         | "game_reward"
         | "game_result"
+        | "order_paid"
+        | "order_failed"
+      order_purpose:
+        | "subscription"
+        | "jcoin"
+        | "data_collection"
+        | "marketplace_presentation"
+        | "marketplace_reference"
+        | "marketplace_independent_work"
+        | "marketplace_game"
+        | "other_marketplace_product"
+      order_status:
+        | "pending"
+        | "awaiting_verification"
+        | "processing"
+        | "paid"
+        | "failed"
+        | "cancelled"
+        | "refunded"
+        | "expired"
       payment_state:
         | "created"
         | "card_created"
@@ -4765,6 +5090,7 @@ export const Constants = {
         "game_reward_reserve",
         "game_reward",
         "game_reward_refund",
+        "coin_purchase",
       ],
       element_type: [
         "text",
@@ -4851,6 +5177,28 @@ export const Constants = {
         "refund",
         "game_reward",
         "game_result",
+        "order_paid",
+        "order_failed",
+      ],
+      order_purpose: [
+        "subscription",
+        "jcoin",
+        "data_collection",
+        "marketplace_presentation",
+        "marketplace_reference",
+        "marketplace_independent_work",
+        "marketplace_game",
+        "other_marketplace_product",
+      ],
+      order_status: [
+        "pending",
+        "awaiting_verification",
+        "processing",
+        "paid",
+        "failed",
+        "cancelled",
+        "refunded",
+        "expired",
       ],
       payment_state: [
         "created",
