@@ -278,12 +278,13 @@ function Chart({ element, style, content }: { element: RenderableSlideElement; s
     const r = size / 2 - thickness / 2;
     const cx = element.width / 2;
     const cy = plotHeight / 2;
-    let cursor = 0;
-    const arcs = values.map((value, index) => {
-      const sweep = (value / total) * 359.9;
-      const arc = { d: donutPath(cx, cy, r, cursor, cursor + sweep), color: colorAt(index) };
-      cursor += sweep;
-      return arc;
+    // Each arc starts where the ones before it ended. Summing the preceding
+    // slices rather than carrying a cursor keeps the map pure — a closure the
+    // renderer mutates while it draws is a rerender bug waiting to happen.
+    const sweeps = values.map((value) => (value / total) * 359.9);
+    const arcs = sweeps.map((sweep, index) => {
+      const start = sweeps.slice(0, index).reduce((sum, part) => sum + part, 0);
+      return { d: donutPath(cx, cy, r, start, start + sweep), color: colorAt(index) };
     });
     return (
       <svg aria-hidden width={element.width} height={element.height}>
