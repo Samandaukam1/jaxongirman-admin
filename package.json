@@ -11,12 +11,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@jaxongirman/slide-dom": "file:./packages/slide-dom",
     "@jaxongirman/types": "*",
     "@supabase/supabase-js": "latest",
     "lucide-react": "latest",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "@jaxongirman/slide-dom": "*"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@eslint/js": "latest",
