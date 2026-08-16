@@ -1106,6 +1106,63 @@ export type Database = {
           },
         ]
       }
+      marketplace_licenses: {
+        Row: {
+          download_allowed: boolean
+          editable: boolean
+          granted_at: string
+          id: string
+          license_type: string
+          presentable: boolean
+          presentation_id: string | null
+          product_id: string
+          resale_allowed: boolean
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          download_allowed?: boolean
+          editable?: boolean
+          granted_at?: string
+          id?: string
+          license_type: string
+          presentable?: boolean
+          presentation_id?: string | null
+          product_id: string
+          resale_allowed?: boolean
+          source_type?: string
+          user_id: string
+        }
+        Update: {
+          download_allowed?: boolean
+          editable?: boolean
+          granted_at?: string
+          id?: string
+          license_type?: string
+          presentable?: boolean
+          presentation_id?: string | null
+          product_id?: string
+          resale_allowed?: boolean
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_licenses_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_licenses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_material_types: {
         Row: {
           allowed_mime_types: string[]
@@ -1835,6 +1892,51 @@ export type Database = {
           },
         ]
       }
+      payment_card_attempts: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          display_pan: string
+          expires_at: string
+          expiry_month: number
+          expiry_year: number
+          id: string
+          provider_token: string | null
+          subject_id: string
+          subject_kind: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          display_pan: string
+          expires_at: string
+          expiry_month: number
+          expiry_year: number
+          id?: string
+          provider_token?: string | null
+          subject_id: string
+          subject_kind: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          display_pan?: string
+          expires_at?: string
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          provider_token?: string | null
+          subject_id?: string
+          subject_kind?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           attempt_expires_at: string | null
@@ -2524,6 +2626,7 @@ export type Database = {
           last_name: string
           last_seen_at: string | null
           status: Database["public"]["Enums"]["user_status"]
+          timezone: string
           updated_at: string
           username: string | null
         }
@@ -2537,6 +2640,7 @@ export type Database = {
           last_name?: string
           last_seen_at?: string | null
           status?: Database["public"]["Enums"]["user_status"]
+          timezone?: string
           updated_at?: string
           username?: string | null
         }
@@ -2550,6 +2654,7 @@ export type Database = {
           last_name?: string
           last_seen_at?: string | null
           status?: Database["public"]["Enums"]["user_status"]
+          timezone?: string
           updated_at?: string
           username?: string | null
         }
@@ -3046,6 +3151,96 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          badge: string
+          code: string
+          compare_at_amount: number
+          created_at: string
+          cta_label: string
+          currency: string
+          description: string
+          estimated_cost_amount: number
+          features: Json
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          name: string
+          period_days: number
+          price_amount: number
+          sort_order: number
+          subtitle: string
+          updated_at: string
+        }
+        Insert: {
+          badge?: string
+          code: string
+          compare_at_amount?: number
+          created_at?: string
+          cta_label?: string
+          currency?: string
+          description?: string
+          estimated_cost_amount?: number
+          features?: Json
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name: string
+          period_days?: number
+          price_amount: number
+          sort_order?: number
+          subtitle?: string
+          updated_at?: string
+        }
+        Update: {
+          badge?: string
+          code?: string
+          compare_at_amount?: number
+          created_at?: string
+          cta_label?: string
+          currency?: string
+          description?: string
+          estimated_cost_amount?: number
+          features?: Json
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name?: string
+          period_days?: number
+          price_amount?: number
+          sort_order?: number
+          subtitle?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_usage: {
+        Row: {
+          feature_key: string
+          id: string
+          period_start: string
+          updated_at: string
+          used: number
+          user_id: string
+        }
+        Insert: {
+          feature_key: string
+          id?: string
+          period_start: string
+          updated_at?: string
+          used?: number
+          user_id: string
+        }
+        Update: {
+          feature_key?: string
+          id?: string
+          period_start?: string
+          updated_at?: string
+          used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       survey_answer_files: {
         Row: {
           answer_id: string
@@ -3506,6 +3701,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          plan_id: string
+          plan_snapshot: Json
+          started_at: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          plan_id: string
+          plan_snapshot?: Json
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          plan_id?: string
+          plan_snapshot?: Json
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -4063,6 +4315,52 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_save_subscription_plan: {
+        Args: {
+          p_badge?: string
+          p_code: string
+          p_compare_at_amount?: number
+          p_cta_label?: string
+          p_currency?: string
+          p_description?: string
+          p_estimated_cost_amount?: number
+          p_features: Json
+          p_id: string
+          p_is_active?: boolean
+          p_is_featured?: boolean
+          p_name: string
+          p_period_days?: number
+          p_price_amount: number
+          p_sort_order?: number
+          p_subtitle?: string
+        }
+        Returns: {
+          badge: string
+          code: string
+          compare_at_amount: number
+          created_at: string
+          cta_label: string
+          currency: string
+          description: string
+          estimated_cost_amount: number
+          features: Json
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          name: string
+          period_days: number
+          price_amount: number
+          sort_order: number
+          subtitle: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_plans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_set_commission: {
         Args: {
           p_buyer_fee_rate: number
@@ -4151,6 +4449,7 @@ export type Database = {
           last_name: string
           last_seen_at: string | null
           status: Database["public"]["Enums"]["user_status"]
+          timezone: string
           updated_at: string
           username: string | null
         }
@@ -4162,6 +4461,7 @@ export type Database = {
         }
       }
       admin_settle_ai_cost: { Args: { p_note?: string }; Returns: Json }
+      admin_subscription_overview: { Args: never; Returns: Json }
       admin_terminate_game_session: {
         Args: { p_reason: string; p_session_id: string }
         Returns: boolean
@@ -4258,6 +4558,10 @@ export type Database = {
         }
         Returns: number
       }
+      assert_marketplace_member: {
+        Args: { p_action: string }
+        Returns: undefined
+      }
       assert_module_access: {
         Args: { p_module_code: string; p_role: string }
         Returns: undefined
@@ -4273,6 +4577,28 @@ export type Database = {
       current_app_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      current_subscription: {
+        Args: { p_user_id?: string }
+        Returns: {
+          cancelled_at: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          plan_id: string
+          plan_snapshot: Json
+          started_at: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       estimate_presentation_credits: {
         Args: {
@@ -4444,6 +4770,28 @@ export type Database = {
       is_admin: { Args: { p_user_id?: string }; Returns: boolean }
       is_latin_text: { Args: { p_value: string }; Returns: boolean }
       is_super_admin: { Args: { p_user_id?: string }; Returns: boolean }
+      jcoin_refund: {
+        Args: {
+          p_idempotency_key: string
+          p_reason?: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
+      jcoin_reserve: {
+        Args: {
+          p_idempotency_key: string
+          p_metadata?: Json
+          p_operation: string
+          p_reference_id?: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
+      jcoin_settle: {
+        Args: { p_idempotency_key: string; p_user_id?: string }
+        Returns: Json
+      }
       mark_notifications_read: { Args: { p_id?: string }; Returns: number }
       marketplace_attach_file: {
         Args: {
@@ -4478,6 +4826,10 @@ export type Database = {
         Args: { p_product_id: string; p_user_id?: string }
         Returns: boolean
       }
+      marketplace_may_download: {
+        Args: { p_product_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       marketplace_product_detail: {
         Args: { p_product_id: string }
         Returns: Json
@@ -4485,32 +4837,6 @@ export type Database = {
       marketplace_quote: {
         Args: { p_base_price: number; p_scope?: string }
         Returns: Json
-      }
-      marketplace_remember_partial_card: {
-        Args: {
-          p_expiry_month: number
-          p_expiry_year: number
-          p_first8: string
-          p_last4: string
-          p_user_id: string
-        }
-        Returns: {
-          created_at: string
-          display_pan: string
-          expiry_month: number
-          expiry_year: number
-          id: string
-          is_active: boolean
-          last_used_at: string | null
-          last4: string
-          user_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "partial_cards"
-          isOneToOne: true
-          isSetofReturn: false
-        }
       }
       marketplace_save_product: {
         Args: {
@@ -4542,11 +4868,24 @@ export type Database = {
         }
         Returns: Json
       }
+      marketplace_settle_and_remember_card: {
+        Args: {
+          p_attempt_id: string
+          p_provider_cost?: number
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
       marketplace_settle_payment: {
         Args: { p_provider_cost?: number; p_transaction_id: string }
         Returns: Json
       }
+      marketplace_unlock_with_subscription: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
       module_access_state: { Args: { p_module_code?: string }; Returns: Json }
+      my_entitlements: { Args: { p_user_id?: string }; Returns: Json }
       my_orders: {
         Args: { p_limit?: number }
         Returns: {
@@ -4593,10 +4932,9 @@ export type Database = {
         Args: { p_module_code?: string; p_platform?: string }
         Returns: Json
       }
-      order_create_subscription: {
-        Args: { p_plan_code: string; p_platform?: string }
-        Returns: Json
-      }
+      order_create_subscription:
+        | { Args: { p_plan_code: string; p_platform?: string }; Returns: Json }
+        | { Args: { p_plan_id: string; p_platform?: string }; Returns: Json }
       order_fail: {
         Args: { p_code: string; p_message: string; p_order_id: string }
         Returns: boolean
@@ -4657,6 +4995,20 @@ export type Database = {
           p_provider_cost?: number
         }
         Returns: Json
+      }
+      order_fulfil_and_remember_card: {
+        Args: {
+          p_attempt_id: string
+          p_order_id: string
+          p_payme_receipt_id?: string
+          p_payme_transaction_id?: string
+          p_provider_cost?: number
+        }
+        Returns: Json
+      }
+      order_mark_processing: {
+        Args: { p_order_id: string; p_payme_receipt_id: string }
+        Returns: boolean
       }
       order_mark_test: { Args: { p_order_id: string }; Returns: undefined }
       order_purpose_for_material: {
@@ -4768,6 +5120,34 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      payment_card_attempt_clear: {
+        Args: {
+          p_attempt_id: string
+          p_subject_id: string
+          p_subject_kind: string
+        }
+        Returns: boolean
+      }
+      payment_card_attempt_set: {
+        Args: {
+          p_display_pan: string
+          p_expiry_month: number
+          p_expiry_year: number
+          p_minutes?: number
+          p_subject_id: string
+          p_subject_kind: string
+          p_token: string
+        }
+        Returns: string
+      }
+      payment_card_attempt_take: {
+        Args: {
+          p_attempt_id: string
+          p_subject_id: string
+          p_subject_kind: string
+        }
+        Returns: Json
       }
       payment_clear_attempt_token: {
         Args: { p_transaction_id: string }
@@ -5001,6 +5381,18 @@ export type Database = {
         Returns: Json
       }
       purge_stale_orders: { Args: never; Returns: number }
+      quota_consume: {
+        Args: { p_amount?: number; p_feature_key: string; p_user_id?: string }
+        Returns: Json
+      }
+      quota_release: {
+        Args: { p_amount?: number; p_feature_key: string; p_user_id?: string }
+        Returns: undefined
+      }
+      quota_status: {
+        Args: { p_feature_key: string; p_user_id?: string }
+        Returns: Json
+      }
       record_survey_export: {
         Args: {
           p_form_id: string
@@ -5020,6 +5412,31 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "survey_exports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      remember_partial_card: {
+        Args: {
+          p_display_pan: string
+          p_expiry_month: number
+          p_expiry_year: number
+          p_user_id: string
+        }
+        Returns: {
+          created_at: string
+          display_pan: string
+          expiry_month: number
+          expiry_year: number
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          last4: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "partial_cards"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -5157,6 +5574,10 @@ export type Database = {
           p_recipient_id: string
         }
         Returns: Json
+      }
+      usage_period_start: {
+        Args: { p_period: string; p_user_id: string }
+        Returns: string
       }
     }
     Enums: {
@@ -5308,6 +5729,12 @@ export type Database = {
       seller_ledger_status: "pending" | "approved" | "paid" | "reversed"
       settlement_status: "draft" | "pending" | "paid" | "cancelled"
       step_status: "queued" | "running" | "succeeded" | "failed" | "skipped"
+      subscription_status:
+        | "inactive"
+        | "payment_pending"
+        | "active"
+        | "expired"
+        | "cancelled"
       survey_participant_status: "invited" | "viewed" | "submitted"
       survey_question_type:
         | "short_text"
@@ -5601,6 +6028,13 @@ export const Constants = {
       seller_ledger_status: ["pending", "approved", "paid", "reversed"],
       settlement_status: ["draft", "pending", "paid", "cancelled"],
       step_status: ["queued", "running", "succeeded", "failed", "skipped"],
+      subscription_status: [
+        "inactive",
+        "payment_pending",
+        "active",
+        "expired",
+        "cancelled",
+      ],
       survey_participant_status: ["invited", "viewed", "submitted"],
       survey_question_type: [
         "short_text",
