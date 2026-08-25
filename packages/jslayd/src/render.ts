@@ -1,4 +1,4 @@
-import { extendChartPalette, resolveColor } from "./colors.ts";
+import { contrastRatio, extendChartPalette, readableOn, resolveColor } from "./colors.ts";
 import {
   conditionHolds,
   previewSlide,
@@ -30,7 +30,7 @@ import type {
   TextSource,
   TextStyle,
 } from "./document.ts";
-import { CHART_FALLBACKS, MIN_FONT_SIZE, MIN_RENDER_FONT_SIZE, RENDER_SCALE } from "./spec.ts";
+import { CHART_FALLBACKS, DESIGN_ASSET_BUCKET, MIN_FONT_SIZE, MIN_RENDER_FONT_SIZE, RENDER_SCALE } from "./spec.ts";
 
 /**
  * The JSLAYD render engine.
@@ -97,6 +97,7 @@ export function renderArchetype(
   const context: RenderContext = {
     colors: family.colors,
     fonts: new Map(document.fonts.map((font) => [font.id, font])),
+    slug: document.design.slug,
     chartPalette: family.chartPalette,
     slide,
   };
@@ -105,7 +106,66 @@ export function renderArchetype(
   // The apps sort by z_index, but a stable emit order keeps two renders of one
   // slide byte-identical, which is what visual regression compares.
   elements.sort((first, second) => first.z_index - second.z_index);
-  return { background: paintBackground(archetype.background, context.colors), elements };
+
+  const background = paintBackground(archetype.background, context.colors);
+  ensureReadable(elements, typeof background.color === "string" ? background.color : context.colors.background);
+  return { background, elements };
+}
+
+/** Below this, type on a projected slide cannot be read from the back of a room. */
+const MIN_CONTRAST = 3;
+
+/**
+ * Text that cannot be seen against what is behind it is made visible.
+ *
+ * A design states a colour for its type and a colour for the panel the type
+ * sits on, and both are resolved against a palette. When those two land on the
+ * same value — an imported template whose heading was the same blue as the
+ * block behind it, a family whose `text` role is close to its `surface` — the
+ * words are drawn, correctly, and nobody can read them. Every deck made from
+ * that design has the fault and no individual slide looks broken enough to
+ * report.
+ *
+ * So contrast is checked once, at the end, against what is actually underneath:
+ * the nearest opaque filled shape covering the text, or the slide's own
+ * background. Below the floor the colour is replaced with black or white,
+ * whichever the ground can carry.
+ *
+ * Deliberately a floor and not an opinion. Three to one is roughly where type
+ * stops being legible at the back of a room; anything above it is the
+ * designer's choice and is left exactly as authored. Text over a picture is
+ * left alone too — nothing here knows what colour a photograph is, and a guess
+ * would be worse than the author's decision.
+ */
+function ensureReadable(elements: RenderedElement[], slideBackground: string): void {
+  const isHex = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+
+  elements.forEach((element, index) => {
+    if (element.type !== "text") return;
+    const style = element.style as Record<string, unknown>;
+    const color = style.color;
+    if (!isHex(color)) return;
+
+    let ground = slideBackground;
+    for (let below = 0; below < index; below += 1) {
+      const under = elements[below]!;
+      if (under.type === "image" || under.type === "chart" || under.type === "table") continue;
+      const fill = (under.style as Record<string, unknown>)?.fill;
+      if (!isHex(fill)) continue;
+      const opacity = typeof under.opacity === "number" ? under.opacity : 1;
+      if (opacity < 0.6) continue;
+      // The text's centre is the honest test: a panel that merely touches a
+      // corner of the box is not what the words are sitting on.
+      const centreX = element.x + element.width / 2;
+      const centreY = element.y + element.height / 2;
+      if (centreX < under.x || centreX > under.x + under.width) continue;
+      if (centreY < under.y || centreY > under.y + under.height) continue;
+      ground = fill;
+    }
+
+    if (contrastRatio(color, ground) >= MIN_CONTRAST) return;
+    style.color = readableOn(ground);
+  });
 }
 
 type RenderContext = {
@@ -113,6 +173,8 @@ type RenderContext = {
   fonts: Map<string, FontDeclaration>;
   chartPalette: readonly string[];
   slide: SlideData;
+  /** Every font file of a design is stored under it; see `assetKey`. */
+  slug: string;
 };
 
 function emit(
@@ -353,6 +415,23 @@ export function bundledFace(fallback: string, weight: number): string {
   return best.family;
 }
 
+/**
+ * The object key a face is actually stored under.
+ *
+ * A design declares its files by name — `apelsen-display-700.ttf` — because
+ * that is what an author types and what the design owns. They are uploaded to
+ * the design's own folder in the bucket, so the name alone addresses nothing:
+ * an exporter asking for it gets a 404 and silently falls back to a bundled
+ * face, which is a deck set in the wrong typeface with nothing to show for it.
+ *
+ * A name already carrying a folder is left alone, so a document that stores the
+ * full key — every design generated from a PowerPoint template does — is not
+ * given the prefix twice.
+ */
+function assetKey(asset: string, slug: string): string {
+  return asset.includes("/") ? asset : `${slug}/${asset}`;
+}
+
 function typeface(style: TextStyle, context: RenderContext): Record<string, unknown> {
   const font = context.fonts.get(style.font);
   const fallbackFace = bundledFace(font?.fallback ?? "Manrope", style.fontWeight);
@@ -367,7 +446,7 @@ function typeface(style: TextStyle, context: RenderContext): Record<string, unkn
     fontFallback: fallbackFace,
     // The object key of the custom face, so an exporter that can embed a font
     // embeds the design's own rather than approximating it.
-    ...(face ? { fontAsset: face.asset, fontDisplayName: font!.name } : {}),
+    ...(face ? { fontAsset: assetKey(face.asset, context.slug), fontDisplayName: font!.name } : {}),
     fontWeight: String(style.fontWeight),
     fontStyle: style.fontStyle,
   };
@@ -477,6 +556,15 @@ function plate(
 function renderText(element: TextElement, box: Box, geometry: Geometry, context: RenderContext): RenderedElement[] {
   const text = sourceText(element.source, context);
   if (!text) return [];
+  /**
+   * Which element of the design this row came from.
+   *
+   * Carried so something downstream can find its way back. A design imported
+   * from PowerPoint is exported by editing the original slide, and the only
+   * thing joining a finished row of copy to the shape it belongs in is this id
+   * — without it the words would have to be matched by guessing at position.
+   */
+  const origin = { elementId: element.id };
 
   const inset = scale(element.padding);
   const inner: Box = {
@@ -492,7 +580,7 @@ function renderText(element: TextElement, box: Box, geometry: Geometry, context:
   rows.push({
     ...base("text", inner, geometry, element.opacity),
     style: textStyleOf(element.text, shaped.fontSize, context),
-    content: { text, maxLines: shaped.maxLines },
+    content: { text, maxLines: shaped.maxLines, ...origin },
   });
   return rows;
 }
@@ -577,8 +665,55 @@ function renderStat(element: StatElement, box: Box, geometry: Geometry, context:
 
 /* ------------------------------------------------------------------ media */
 
+/**
+ * A slot filled by a reusable object rather than a photograph.
+ *
+ * The shapes arrive already drawn, in the element's own 0–1 space, and are
+ * projected into the slot the design placed. That order matters: JSLAYD decides
+ * where a visual sits and how big it is, and the element only fills it. An
+ * element that could move itself would be a design deciding its own layout.
+ */
+function renderPlacedElement(element: ImageElement, box: Box, geometry: Geometry, context: RenderContext): RenderedElement[] {
+  const shapes = context.slide.elements[element.slot] ?? [];
+  if (shapes.length === 0) return [];
+
+  const baseZ = zOf(geometry);
+  return [...shapes]
+    .sort((first, second) => first.zIndex - second.zIndex)
+    .map((shape, order) => ({
+      // An element built from geometry emits shapes; one built from a render
+      // emits a single image. Both arrive here already positioned in the
+      // element's own space, so the projection below is the same either way.
+      ...base(shape.type === "image" ? "image" : "shape", {
+        x: box.x + shape.x * box.width,
+        y: box.y + shape.y * box.height,
+        width: shape.width * box.width,
+        height: shape.height * box.height,
+      }, geometry, element.opacity * shape.opacity),
+      rotation: shape.rotation,
+      // Stacked above whatever the slot sits on, in the order the element
+      // declared, so the design's own layering is preserved around it.
+      z_index: baseZ + order,
+      style: shape.style,
+      content: { kind: "jelement", slot: element.slot, ...(shape.content ?? {}) },
+    }));
+}
+
 function renderImage(element: ImageElement, box: Box, geometry: Geometry, context: RenderContext): RenderedElement[] {
-  const picture = context.slide.images[element.slot] ?? null;
+  // A design may declare the slot takes an element instead of a picture.
+  if (element.strategy === "jelement") return renderPlacedElement(element, box, geometry, context);
+
+  /**
+   * The design's own artwork resolves to itself.
+   *
+   * A template's logo, texture or cover photograph is part of the composition
+   * rather than a place to put something, so it does not wait for the deck to
+   * supply anything and does not disappear when the deck supplies nothing.
+   */
+  const owned = element.source && "asset" in element.source
+    ? { bucket: DESIGN_ASSET_BUCKET, path: `${context.slug}/${element.source.asset}` }
+    : null;
+  const picture = owned ?? context.slide.images[element.slot] ?? null;
   // A slot with no picture still draws when the design says the image is
   // required: the renderer shows a placeholder, which is a composition with a
   // hole in it rather than a composition that silently lost a quarter of itself.
@@ -599,6 +734,10 @@ function renderImage(element: ImageElement, box: Box, geometry: Geometry, contex
       kind: element.type === "frame" ? "frame" : "image",
       slot: element.slot,
       strategy: element.strategy,
+      // Only where the hole is: an editor showing an empty box needs to know
+      // what belongs in it, and a filled one does not. Added conditionally so a
+      // picture that resolved carries exactly the fields it always did.
+      ...(picture ? {} : imageHint(element)),
     },
   }];
 
@@ -610,6 +749,33 @@ function renderImage(element: ImageElement, box: Box, geometry: Geometry, contex
     });
   }
   return rows;
+}
+
+/**
+ * What kind of picture belongs in an empty slot.
+ *
+ * A composition with a hole in it is honest, and it is also a question: the
+ * person filling it is looking at a grey rectangle and guessing whether it
+ * wants a portrait, a diagram or a photograph of a building. The design already
+ * knows — it declared an orientation, a source and sometimes a style — so the
+ * answer travels with the hole rather than staying in a document nobody
+ * editing a deck will ever open.
+ */
+function imageHint(element: ImageElement): Record<string, unknown> {
+  const kind = element.strategy === "user_upload"
+    ? "o‘z rasmingiz"
+    : element.strategy === "jelement" ? "chizma element" : "mavzuga oid surat";
+  const shape = element.orientation === "portrait"
+    ? "tik"
+    : element.orientation === "square" ? "kvadrat" : element.orientation === "landscape" ? "yotiq" : "";
+
+  return {
+    empty: true,
+    orientation: element.orientation,
+    required: element.required,
+    ...(element.stylePreference ? { stylePreference: element.stylePreference } : {}),
+    hint: [shape, kind].filter(Boolean).join(" "),
+  };
 }
 
 function imageContent(picture: ImageRef | null): Record<string, unknown> {

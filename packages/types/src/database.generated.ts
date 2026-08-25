@@ -7,8 +7,123 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
+  }
   public: {
     Tables: {
+      academic_sections: {
+        Row: {
+          body: string
+          brief: string
+          citations: Json
+          created_at: string
+          heading: string
+          id: string
+          key: string
+          owner_id: string
+          position: number
+          status: string
+          updated_at: string
+          words: number
+          work_id: string
+        }
+        Insert: {
+          body?: string
+          brief?: string
+          citations?: Json
+          created_at?: string
+          heading: string
+          id?: string
+          key: string
+          owner_id: string
+          position: number
+          status?: string
+          updated_at?: string
+          words?: number
+          work_id: string
+        }
+        Update: {
+          body?: string
+          brief?: string
+          citations?: Json
+          created_at?: string
+          heading?: string
+          id?: string
+          key?: string
+          owner_id?: string
+          position?: number
+          status?: string
+          updated_at?: string
+          words?: number
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_sections_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "academic_works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_works: {
+        Row: {
+          created_at: string
+          empirical: boolean
+          estimated_credits: number
+          failure_reason: string | null
+          field: string
+          id: string
+          kind: string
+          owner_id: string
+          paused_reason: string | null
+          requirements: string
+          sources: Json
+          spent_credits: number
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empirical?: boolean
+          estimated_credits?: number
+          failure_reason?: string | null
+          field?: string
+          id?: string
+          kind: string
+          owner_id: string
+          paused_reason?: string | null
+          requirements?: string
+          sources?: Json
+          spent_credits?: number
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empirical?: boolean
+          estimated_credits?: number
+          failure_reason?: string | null
+          field?: string
+          id?: string
+          kind?: string
+          owner_id?: string
+          paused_reason?: string | null
+          requirements?: string
+          sources?: Json
+          spent_credits?: number
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_audit_logs: {
         Row: {
           action: string
@@ -368,6 +483,231 @@ export type Database = {
         }
         Relationships: []
       }
+      design_font_usage: {
+        Row: {
+          design_id: string
+          family_id: string
+          requested_name: string
+          resolved: boolean
+        }
+        Insert: {
+          design_id: string
+          family_id: string
+          requested_name?: string
+          resolved?: boolean
+        }
+        Update: {
+          design_id?: string
+          family_id?: string
+          requested_name?: string
+          resolved?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_font_usage_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_font_usage_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "font_families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_slide_profiles: {
+        Row: {
+          alternative_roles: Database["public"]["Enums"]["slide_story_role"][]
+          archetype_id: string
+          created_at: string
+          density: string
+          design_id: string
+          design_version: number
+          id: string
+          is_terminal: boolean
+          layout_signature: string
+          recommended_story_position: number
+          role: Database["public"]["Enums"]["slide_story_role"]
+          source_index: number
+          source_slide_part: string
+          supports_chart: boolean
+          supports_image: boolean
+          supports_quote: boolean
+          supports_stats: boolean
+          supports_table: boolean
+          text_capacity: string
+          text_map: Json
+          visual_weight: string
+        }
+        Insert: {
+          alternative_roles?: Database["public"]["Enums"]["slide_story_role"][]
+          archetype_id: string
+          created_at?: string
+          density?: string
+          design_id: string
+          design_version?: number
+          id?: string
+          is_terminal?: boolean
+          layout_signature?: string
+          recommended_story_position?: number
+          role: Database["public"]["Enums"]["slide_story_role"]
+          source_index?: number
+          source_slide_part?: string
+          supports_chart?: boolean
+          supports_image?: boolean
+          supports_quote?: boolean
+          supports_stats?: boolean
+          supports_table?: boolean
+          text_capacity?: string
+          text_map?: Json
+          visual_weight?: string
+        }
+        Update: {
+          alternative_roles?: Database["public"]["Enums"]["slide_story_role"][]
+          archetype_id?: string
+          created_at?: string
+          density?: string
+          design_id?: string
+          design_version?: number
+          id?: string
+          is_terminal?: boolean
+          layout_signature?: string
+          recommended_story_position?: number
+          role?: Database["public"]["Enums"]["slide_story_role"]
+          source_index?: number
+          source_slide_part?: string
+          supports_chart?: boolean
+          supports_image?: boolean
+          supports_quote?: boolean
+          supports_stats?: boolean
+          supports_table?: boolean
+          text_capacity?: string
+          text_map?: Json
+          visual_weight?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_slide_profiles_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_source_assets: {
+        Row: {
+          byte_size: number
+          content_hash: string
+          created_at: string
+          design_id: string
+          id: string
+          image_count: number
+          original_filename: string
+          slide_count: number
+          source: Database["public"]["Enums"]["design_source"]
+          storage_path: string
+          text_node_count: number
+          uploaded_by: string | null
+        }
+        Insert: {
+          byte_size?: number
+          content_hash: string
+          created_at?: string
+          design_id: string
+          id?: string
+          image_count?: number
+          original_filename?: string
+          slide_count?: number
+          source: Database["public"]["Enums"]["design_source"]
+          storage_path: string
+          text_node_count?: number
+          uploaded_by?: string | null
+        }
+        Update: {
+          byte_size?: number
+          content_hash?: string
+          created_at?: string
+          design_id?: string
+          id?: string
+          image_count?: number
+          original_filename?: string
+          slide_count?: number
+          source?: Database["public"]["Enums"]["design_source"]
+          storage_path?: string
+          text_node_count?: number
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_source_assets_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_topic_synonyms: {
+        Row: {
+          id: string
+          normalized: string
+          term: string
+          topic_id: string
+        }
+        Insert: {
+          id?: string
+          normalized: string
+          term: string
+          topic_id: string
+        }
+        Update: {
+          id?: string
+          normalized?: string
+          term?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_topic_synonyms_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "design_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_topics: {
+        Row: {
+          created_at: string
+          family: string
+          id: string
+          label_uz: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          family?: string
+          id?: string
+          label_uz: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          family?: string
+          id?: string
+          label_uz?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       export_jobs: {
         Row: {
           completed_at: string | null
@@ -466,6 +806,77 @@ export type Database = {
           occurred_on?: string
           period?: Database["public"]["Enums"]["finance_period"]
           source?: Database["public"]["Enums"]["finance_source"]
+        }
+        Relationships: []
+      }
+      font_faces: {
+        Row: {
+          byte_size: number
+          content_hash: string
+          created_at: string
+          family_id: string
+          format: string
+          id: string
+          italic: boolean
+          storage_path: string
+          weight: number
+        }
+        Insert: {
+          byte_size?: number
+          content_hash: string
+          created_at?: string
+          family_id: string
+          format?: string
+          id?: string
+          italic?: boolean
+          storage_path: string
+          weight?: number
+        }
+        Update: {
+          byte_size?: number
+          content_hash?: string
+          created_at?: string
+          family_id?: string
+          format?: string
+          id?: string
+          italic?: boolean
+          storage_path?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "font_faces_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "font_families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      font_families: {
+        Row: {
+          canonical_name: string
+          created_at: string
+          id: string
+          license_metadata: Json
+          normalized_name: string
+          source: string
+        }
+        Insert: {
+          canonical_name: string
+          created_at?: string
+          id?: string
+          license_metadata?: Json
+          normalized_name: string
+          source?: string
+        }
+        Update: {
+          canonical_name?: string
+          created_at?: string
+          id?: string
+          license_metadata?: Json
+          normalized_name?: string
+          source?: string
         }
         Relationships: []
       }
@@ -830,6 +1241,8 @@ export type Database = {
           created_at: string
           description: string
           difficulty: string
+          failure_code: string | null
+          failure_detail: string | null
           failure_reason: string | null
           featured_at: string | null
           id: string
@@ -850,6 +1263,8 @@ export type Database = {
           created_at?: string
           description?: string
           difficulty?: string
+          failure_code?: string | null
+          failure_detail?: string | null
           failure_reason?: string | null
           featured_at?: string | null
           id?: string
@@ -870,6 +1285,8 @@ export type Database = {
           created_at?: string
           description?: string
           difficulty?: string
+          failure_code?: string | null
+          failure_detail?: string | null
           failure_reason?: string | null
           featured_at?: string | null
           id?: string
@@ -1036,6 +1453,292 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "generation_jobs"
             referencedColumns: ["id", "presentation_id", "owner_id"]
+          },
+        ]
+      }
+      jelement_aliases: {
+        Row: {
+          alias: string
+          element_id: string
+          id: string
+          kind: string
+          language: string
+          normalized: string
+        }
+        Insert: {
+          alias: string
+          element_id: string
+          id?: string
+          kind?: string
+          language?: string
+          normalized: string
+        }
+        Update: {
+          alias?: string
+          element_id?: string
+          id?: string
+          kind?: string
+          language?: string
+          normalized?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jelement_aliases_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "jelements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jelement_families: {
+        Row: {
+          category: string
+          color_tokens: Json
+          content_hash: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          format_version: string
+          id: string
+          name: string
+          published_at: string | null
+          published_version: number
+          search_metadata: Json
+          slug: string
+          source_prompt: string
+          status: Database["public"]["Enums"]["jelement_status"]
+          style: string
+          subcategory: string
+          thumbnail_path: string | null
+          updated_at: string
+          visual_dna: Json
+        }
+        Insert: {
+          category?: string
+          color_tokens?: Json
+          content_hash?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          format_version?: string
+          id?: string
+          name: string
+          published_at?: string | null
+          published_version?: number
+          search_metadata?: Json
+          slug: string
+          source_prompt?: string
+          status?: Database["public"]["Enums"]["jelement_status"]
+          style?: string
+          subcategory?: string
+          thumbnail_path?: string | null
+          updated_at?: string
+          visual_dna?: Json
+        }
+        Update: {
+          category?: string
+          color_tokens?: Json
+          content_hash?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          format_version?: string
+          id?: string
+          name?: string
+          published_at?: string | null
+          published_version?: number
+          search_metadata?: Json
+          slug?: string
+          source_prompt?: string
+          status?: Database["public"]["Enums"]["jelement_status"]
+          style?: string
+          subcategory?: string
+          thumbnail_path?: string | null
+          updated_at?: string
+          visual_dna?: Json
+        }
+        Relationships: []
+      }
+      jelement_usage: {
+        Row: {
+          created_at: string
+          element_id: string
+          id: string
+          presentation_id: string | null
+          query: string | null
+          slide_id: string | null
+          slide_role: string | null
+        }
+        Insert: {
+          created_at?: string
+          element_id: string
+          id?: string
+          presentation_id?: string | null
+          query?: string | null
+          slide_id?: string | null
+          slide_role?: string | null
+        }
+        Update: {
+          created_at?: string
+          element_id?: string
+          id?: string
+          presentation_id?: string | null
+          query?: string | null
+          slide_id?: string | null
+          slide_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jelement_usage_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "jelements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jelement_usage_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jelement_usage_slide_id_fkey"
+            columns: ["slide_id"]
+            isOneToOne: false
+            referencedRelation: "slides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jelement_versions: {
+        Row: {
+          content_hash: string
+          element_id: string
+          id: string
+          published_at: string
+          published_by: string | null
+          spec: Json
+          version: number
+        }
+        Insert: {
+          content_hash: string
+          element_id: string
+          id?: string
+          published_at?: string
+          published_by?: string | null
+          spec: Json
+          version: number
+        }
+        Update: {
+          content_hash?: string
+          element_id?: string
+          id?: string
+          published_at?: string
+          published_by?: string | null
+          spec?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jelement_versions_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "jelements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jelements: {
+        Row: {
+          appearance: Json
+          asset_accent_hue: number | null
+          asset_path: string | null
+          asset_recolorable: boolean
+          asset_variants: Json
+          canonical_name: string
+          category: string
+          created_at: string
+          display_name: string
+          family_id: string
+          geometry: Json
+          id: string
+          object_class: string
+          position: number
+          published_at: string | null
+          published_version: number
+          render_spec: Json | null
+          semantic: Json
+          status: Database["public"]["Enums"]["jelement_status"]
+          subcategory: string
+          thumbnail_path: string | null
+          transform_rules: Json
+          updated_at: string
+          usage_count: number
+          usage_rules: Json
+        }
+        Insert: {
+          appearance?: Json
+          asset_accent_hue?: number | null
+          asset_path?: string | null
+          asset_recolorable?: boolean
+          asset_variants?: Json
+          canonical_name: string
+          category?: string
+          created_at?: string
+          display_name?: string
+          family_id: string
+          geometry?: Json
+          id?: string
+          object_class?: string
+          position?: number
+          published_at?: string | null
+          published_version?: number
+          render_spec?: Json | null
+          semantic?: Json
+          status?: Database["public"]["Enums"]["jelement_status"]
+          subcategory?: string
+          thumbnail_path?: string | null
+          transform_rules?: Json
+          updated_at?: string
+          usage_count?: number
+          usage_rules?: Json
+        }
+        Update: {
+          appearance?: Json
+          asset_accent_hue?: number | null
+          asset_path?: string | null
+          asset_recolorable?: boolean
+          asset_variants?: Json
+          canonical_name?: string
+          category?: string
+          created_at?: string
+          display_name?: string
+          family_id?: string
+          geometry?: Json
+          id?: string
+          object_class?: string
+          position?: number
+          published_at?: string | null
+          published_version?: number
+          render_spec?: Json | null
+          semantic?: Json
+          status?: Database["public"]["Enums"]["jelement_status"]
+          subcategory?: string
+          thumbnail_path?: string | null
+          transform_rules?: Json
+          updated_at?: string
+          usage_count?: number
+          usage_rules?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jelements_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "jelement_families"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1665,6 +2368,50 @@ export type Database = {
         }
         Relationships: []
       }
+      objective_documents: {
+        Row: {
+          created_at: string
+          fields: Json
+          full_name: string
+          id: string
+          owner_id: string
+          portrait_id: string | null
+          relatives: Json
+          updated_at: string
+          work: Json
+        }
+        Insert: {
+          created_at?: string
+          fields?: Json
+          full_name?: string
+          id?: string
+          owner_id: string
+          portrait_id?: string | null
+          relatives?: Json
+          updated_at?: string
+          work?: Json
+        }
+        Update: {
+          created_at?: string
+          fields?: Json
+          full_name?: string
+          id?: string
+          owner_id?: string
+          portrait_id?: string | null
+          relatives?: Json
+          updated_at?: string
+          work?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objective_documents_portrait_id_fkey"
+            columns: ["portrait_id"]
+            isOneToOne: false
+            referencedRelation: "portrait_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           attempt_expires_at: string | null
@@ -2055,6 +2802,39 @@ export type Database = {
           },
         ]
       }
+      portrait_sheets: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          sheet_path: string | null
+          source_height: number | null
+          source_path: string
+          source_width: number | null
+          warnings: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          sheet_path?: string | null
+          source_height?: number | null
+          source_path: string
+          source_width?: number | null
+          warnings?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          sheet_path?: string | null
+          source_height?: number | null
+          source_path?: string
+          source_width?: number | null
+          warnings?: Json
+        }
+        Relationships: []
+      }
       presentation_assets: {
         Row: {
           alt_text: string | null
@@ -2129,6 +2909,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "presentations"
             referencedColumns: ["id", "owner_id"]
+          },
+        ]
+      }
+      presentation_defenses: {
+        Row: {
+          conclusion: string
+          created_at: string
+          failure_reason: string | null
+          introduction: string
+          owner_id: string
+          presentation_id: string
+          sections: Json
+          status: string
+          updated_at: string
+          written_for: string | null
+        }
+        Insert: {
+          conclusion?: string
+          created_at?: string
+          failure_reason?: string | null
+          introduction?: string
+          owner_id: string
+          presentation_id: string
+          sections?: Json
+          status?: string
+          updated_at?: string
+          written_for?: string | null
+        }
+        Update: {
+          conclusion?: string
+          created_at?: string
+          failure_reason?: string | null
+          introduction?: string
+          owner_id?: string
+          presentation_id?: string
+          sections?: Json
+          status?: string
+          updated_at?: string
+          written_for?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_defenses_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: true
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2239,17 +3066,20 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
+          design_source: Database["public"]["Enums"]["design_source"]
           format_version: string
           health_score: number | null
           id: string
           is_featured: boolean
           is_premium: boolean
+          keywords: Json
           name: string
           preview: Json
           published_at: string | null
           published_version: number
           slug: string
           sort_order: number
+          source_asset_path: string | null
           source_prompt: string
           status: Database["public"]["Enums"]["jslayd_design_status"]
           thumbnail_path: string | null
@@ -2262,17 +3092,20 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          design_source?: Database["public"]["Enums"]["design_source"]
           format_version?: string
           health_score?: number | null
           id?: string
           is_featured?: boolean
           is_premium?: boolean
+          keywords?: Json
           name: string
           preview?: Json
           published_at?: string | null
           published_version?: number
           slug: string
           sort_order?: number
+          source_asset_path?: string | null
           source_prompt?: string
           status?: Database["public"]["Enums"]["jslayd_design_status"]
           thumbnail_path?: string | null
@@ -2285,17 +3118,20 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          design_source?: Database["public"]["Enums"]["design_source"]
           format_version?: string
           health_score?: number | null
           id?: string
           is_featured?: boolean
           is_premium?: boolean
+          keywords?: Json
           name?: string
           preview?: Json
           published_at?: string | null
           published_version?: number
           slug?: string
           sort_order?: number
+          source_asset_path?: string | null
           source_prompt?: string
           status?: Database["public"]["Enums"]["jslayd_design_status"]
           thumbnail_path?: string | null
@@ -2600,13 +3436,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "presentations_palette_code_fkey"
-            columns: ["palette_code"]
-            isOneToOne: false
-            referencedRelation: "palette_families"
-            referencedColumns: ["code"]
-          },
-          {
             foreignKeyName: "presentations_template_code_fkey"
             columns: ["template_code"]
             isOneToOne: false
@@ -2620,11 +3449,13 @@ export type Database = {
           avatar_url: string | null
           bio: string
           created_at: string
+          field_of_study: string | null
           first_name: string
           full_name: string
           id: string
           last_name: string
           last_seen_at: string | null
+          organization: string | null
           status: Database["public"]["Enums"]["user_status"]
           timezone: string
           updated_at: string
@@ -2634,11 +3465,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           created_at?: string
+          field_of_study?: string | null
           first_name?: string
           full_name?: string
           id: string
           last_name?: string
           last_seen_at?: string | null
+          organization?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           timezone?: string
           updated_at?: string
@@ -2648,11 +3481,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           created_at?: string
+          field_of_study?: string | null
           first_name?: string
           full_name?: string
           id?: string
           last_name?: string
           last_seen_at?: string | null
+          organization?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           timezone?: string
           updated_at?: string
@@ -3213,6 +4048,67 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscription_restarts: {
+        Row: {
+          created_at: string
+          discarded_days: number
+          discarded_usage: Json
+          id: string
+          new_subscription_id: string | null
+          order_id: string | null
+          plan_code: string
+          previous_subscription_id: string | null
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discarded_days?: number
+          discarded_usage?: Json
+          id?: string
+          new_subscription_id?: string | null
+          order_id?: string | null
+          plan_code: string
+          previous_subscription_id?: string | null
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discarded_days?: number
+          discarded_usage?: Json
+          id?: string
+          new_subscription_id?: string | null
+          order_id?: string | null
+          plan_code?: string
+          previous_subscription_id?: string | null
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_restarts_new_subscription_id_fkey"
+            columns: ["new_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_restarts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_restarts_previous_subscription_id_fkey"
+            columns: ["previous_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_usage: {
         Row: {
@@ -3788,9 +4684,44 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_append_jelement_family: {
+        Args: { p_family_id: string; p_spec: Json }
+        Returns: number
+      }
       admin_archive_design: {
         Args: { p_design_id: string; p_reason?: string }
         Returns: undefined
+      }
+      admin_archive_jelement_family: {
+        Args: { p_family_id: string; p_restore?: boolean }
+        Returns: {
+          category: string
+          color_tokens: Json
+          content_hash: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          format_version: string
+          id: string
+          name: string
+          published_at: string | null
+          published_version: number
+          search_metadata: Json
+          slug: string
+          source_prompt: string
+          status: Database["public"]["Enums"]["jelement_status"]
+          style: string
+          subcategory: string
+          thumbnail_path: string | null
+          updated_at: string
+          visual_dna: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jelement_families"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       admin_create_settlement: {
         Args: {
@@ -3826,12 +4757,24 @@ export type Database = {
       }
       admin_dashboard_metrics: { Args: never; Returns: Json }
       admin_delete_coin_package: { Args: { p_code: string }; Returns: boolean }
+      admin_delete_design: {
+        Args: { p_design_id: string; p_force?: boolean }
+        Returns: Json
+      }
       admin_delete_design_font: {
         Args: { p_design_id: string; p_font_id: string }
         Returns: undefined
       }
       admin_delete_finance_entry: { Args: { p_id: string }; Returns: boolean }
       admin_delete_game_category: { Args: { p_id: string }; Returns: boolean }
+      admin_delete_jelement: {
+        Args: { p_element_id: string }
+        Returns: string[]
+      }
+      admin_delete_jelement_family: {
+        Args: { p_family_id: string }
+        Returns: string[]
+      }
       admin_duplicate_design: {
         Args: { p_design_id: string; p_name: string; p_slug: string }
         Returns: string
@@ -3884,6 +4827,7 @@ export type Database = {
           p_limit?: number
           p_offset?: number
           p_query?: string
+          p_source?: Database["public"]["Enums"]["design_source"]
           p_status?: Database["public"]["Enums"]["jslayd_design_status"]
           p_tier?: Database["public"]["Enums"]["presentation_style"]
         }
@@ -3891,16 +4835,20 @@ export type Database = {
           archetype_count: number
           created_at: string
           description: string
+          design_source: Database["public"]["Enums"]["design_source"]
           font_count: number
           health_score: number
           id: string
           is_featured: boolean
           is_premium: boolean
+          keywords: Json
           name: string
+          page_count: number
           published_at: string
           published_version: number
           slug: string
           sort_order: number
+          source_asset_path: string
           status: Database["public"]["Enums"]["jslayd_design_status"]
           thumbnail_path: string
           tier: Database["public"]["Enums"]["presentation_style"]
@@ -3954,6 +4902,7 @@ export type Database = {
           title: string
         }[]
       }
+      admin_list_jelement_families: { Args: never; Returns: Json }
       admin_list_marketplace_products: {
         Args: {
           p_limit?: number
@@ -4177,6 +5126,50 @@ export type Database = {
         }[]
       }
       admin_publish_design: { Args: { p_design_id: string }; Returns: number }
+      admin_publish_jelement_family: {
+        Args: { p_family_id: string }
+        Returns: number
+      }
+      admin_recolor_jelement_family: {
+        Args: { p_color_tokens: Json; p_family_id: string }
+        Returns: {
+          category: string
+          color_tokens: Json
+          content_hash: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          format_version: string
+          id: string
+          name: string
+          published_at: string | null
+          published_version: number
+          search_metadata: Json
+          slug: string
+          source_prompt: string
+          status: Database["public"]["Enums"]["jelement_status"]
+          style: string
+          subcategory: string
+          thumbnail_path: string | null
+          updated_at: string
+          visual_dna: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jelement_families"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_reclaim_credits: {
+        Args: {
+          p_amount: number
+          p_idempotency_key?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       admin_record_finance_entry: {
         Args: {
           p_amount_usd: number
@@ -4274,6 +5267,37 @@ export type Database = {
           p_sort_order?: number
         }
         Returns: string
+      }
+      admin_save_jelement_family: {
+        Args: { p_family_id?: string; p_source_prompt?: string; p_spec: Json }
+        Returns: {
+          category: string
+          color_tokens: Json
+          content_hash: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          format_version: string
+          id: string
+          name: string
+          published_at: string | null
+          published_version: number
+          search_metadata: Json
+          slug: string
+          source_prompt: string
+          status: Database["public"]["Enums"]["jelement_status"]
+          style: string
+          subcategory: string
+          thumbnail_path: string | null
+          updated_at: string
+          visual_dna: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jelement_families"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       admin_save_qr_video_experience: {
         Args: {
@@ -4387,6 +5411,17 @@ export type Database = {
         Args: { p_copy?: Json; p_reason?: string; p_review_mode: boolean }
         Returns: Json
       }
+      admin_set_jelement_asset: {
+        Args: {
+          p_accent_hue?: number
+          p_aspect_ratio?: number
+          p_asset_path: string
+          p_element_id: string
+          p_recolorable?: boolean
+          p_variants?: Json
+        }
+        Returns: undefined
+      }
       admin_set_payment_test_mode: {
         Args: {
           p_emails?: string[]
@@ -4443,11 +5478,13 @@ export type Database = {
           avatar_url: string | null
           bio: string
           created_at: string
+          field_of_study: string | null
           first_name: string
           full_name: string
           id: string
           last_name: string
           last_seen_at: string | null
+          organization: string | null
           status: Database["public"]["Enums"]["user_status"]
           timezone: string
           updated_at: string
@@ -4515,6 +5552,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_update_template: {
+        Args: {
+          p_description?: string
+          p_design_id: string
+          p_is_premium?: boolean
+          p_keywords?: Json
+          p_name?: string
+          p_pages?: Json
+          p_tier?: Database["public"]["Enums"]["presentation_style"]
+        }
+        Returns: undefined
+      }
       admin_upsert_coin_package: {
         Args: {
           p_bonus_coins?: number
@@ -4558,6 +5607,10 @@ export type Database = {
         }
         Returns: number
       }
+      apply_subscription_restart: {
+        Args: { p_order_id: string; p_plan_id: string; p_user_id: string }
+        Returns: string
+      }
       assert_marketplace_member: {
         Args: { p_action: string }
         Returns: undefined
@@ -4568,6 +5621,10 @@ export type Database = {
       }
       assert_payment_allowed: {
         Args: { p_context?: string; p_platform?: string }
+        Returns: undefined
+      }
+      assert_reads_own_entitlements: {
+        Args: { p_user_id: string }
         Returns: undefined
       }
       create_survey_from_template: {
@@ -4792,6 +5849,30 @@ export type Database = {
         Args: { p_idempotency_key: string; p_user_id?: string }
         Returns: Json
       }
+      jelement_in_use: { Args: { p_element_id: string }; Returns: boolean }
+      jelement_normalize: { Args: { p_term: string }; Returns: string }
+      jelement_record_usage: {
+        Args: {
+          p_element_id: string
+          p_presentation_id?: string
+          p_query?: string
+          p_slide_id?: string
+          p_slide_role?: string
+        }
+        Returns: undefined
+      }
+      jelement_reindex_aliases: {
+        Args: { p_element_id: string }
+        Returns: undefined
+      }
+      jelement_resolve: {
+        Args: { p_element_id: string; p_version?: number }
+        Returns: Json
+      }
+      jelement_search: {
+        Args: { p_limit?: number; p_query: string; p_slide_role?: string }
+        Returns: Json
+      }
       mark_notifications_read: { Args: { p_id?: string }; Returns: number }
       marketplace_attach_file: {
         Args: {
@@ -4815,6 +5896,7 @@ export type Database = {
           p_partial_card_id?: string
           p_platform?: string
           p_product_id: string
+          p_refund_acknowledged?: boolean
         }
         Returns: Json
       }
@@ -4836,6 +5918,10 @@ export type Database = {
       }
       marketplace_quote: {
         Args: { p_base_price: number; p_scope?: string }
+        Returns: Json
+      }
+      marketplace_refund_ack: {
+        Args: { p_acknowledged: boolean }
         Returns: Json
       }
       marketplace_save_product: {
@@ -4900,6 +5986,7 @@ export type Database = {
         }[]
       }
       my_surveys: { Args: never; Returns: Json }
+      my_usage: { Args: { p_user_id?: string }; Returns: Json }
       next_order_number: { Args: never; Returns: string }
       normalize_uz_phone: { Args: { p_value: string }; Returns: string }
       notify_upcoming_settlements: {
@@ -4925,7 +6012,11 @@ export type Database = {
         Returns: Json
       }
       order_create_marketplace: {
-        Args: { p_platform?: string; p_product_id: string }
+        Args: {
+          p_platform?: string
+          p_product_id: string
+          p_refund_acknowledged?: boolean
+        }
         Returns: Json
       }
       order_create_module: {
@@ -4934,7 +6025,14 @@ export type Database = {
       }
       order_create_subscription:
         | { Args: { p_plan_code: string; p_platform?: string }; Returns: Json }
-        | { Args: { p_plan_id: string; p_platform?: string }; Returns: Json }
+        | {
+            Args: {
+              p_plan_code: string
+              p_platform?: string
+              p_restart?: boolean
+            }
+            Returns: Json
+          }
       order_fail: {
         Args: { p_code: string; p_message: string; p_order_id: string }
         Returns: boolean
@@ -5121,6 +6219,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      payment_card_attempt_active: {
+        Args: { p_subject_id: string; p_subject_kind: string }
+        Returns: Json
+      }
       payment_card_attempt_clear: {
         Args: {
           p_attempt_id: string
@@ -5220,6 +6322,7 @@ export type Database = {
         Args: { p_source_name: string; p_title: string }
         Returns: string
       }
+      pptx_literal_text: { Args: { p_document: Json }; Returns: string }
       presentation_apply_command: {
         Args: { p_command: string; p_session_id: string; p_value?: number }
         Returns: {
@@ -5393,6 +6496,7 @@ export type Database = {
         Args: { p_feature_key: string; p_user_id?: string }
         Returns: Json
       }
+      reap_stale_export_jobs: { Args: { p_owner_id?: string }; Returns: number }
       record_survey_export: {
         Args: {
           p_form_id: string
@@ -5549,6 +6653,10 @@ export type Database = {
         Args: { p_answers: Json; p_form_id: string; p_idempotency_key?: string }
         Returns: Json
       }
+      subscription_restart_preview: {
+        Args: { p_user_id?: string }
+        Returns: Json
+      }
       survey_can_read_response: {
         Args: { p_response_id: string; p_user_id?: string }
         Returns: boolean
@@ -5605,6 +6713,7 @@ export type Database = {
         | "game_reward"
         | "game_reward_refund"
         | "coin_purchase"
+      design_source: "code" | "pptx" | "svg"
       element_type:
         | "text"
         | "image"
@@ -5648,6 +6757,7 @@ export type Database = {
         | "expired"
       game_source: "manual" | "ai" | "text" | "file" | "presentation"
       game_status: "generating" | "draft" | "ready" | "archived" | "failed"
+      jelement_status: "draft" | "published" | "archived"
       job_status: "queued" | "running" | "succeeded" | "failed" | "cancelled"
       jslayd_design_status: "draft" | "published" | "archived"
       marketplace_file_kind: "main" | "study_guide" | "preview"
@@ -5728,6 +6838,36 @@ export type Database = {
       qr_video_surface: "taqdimot" | "oyingoh"
       seller_ledger_status: "pending" | "approved" | "paid" | "reversed"
       settlement_status: "draft" | "pending" | "paid" | "cancelled"
+      slide_story_role:
+        | "welcome"
+        | "introduction"
+        | "overview"
+        | "key_concepts"
+        | "importance"
+        | "types"
+        | "structure"
+        | "process"
+        | "methods"
+        | "analysis"
+        | "challenges"
+        | "solutions"
+        | "applications"
+        | "examples"
+        | "results"
+        | "recommendations"
+        | "conclusion"
+        | "thanks"
+        | "agenda"
+        | "timeline"
+        | "comparison"
+        | "big_number"
+        | "quote"
+        | "case_study"
+        | "data"
+        | "chart"
+        | "table"
+        | "image_story"
+        | "references"
       step_status: "queued" | "running" | "succeeded" | "failed" | "skipped"
       subscription_status:
         | "inactive"
@@ -5893,6 +7033,7 @@ export const Constants = {
         "game_reward_refund",
         "coin_purchase",
       ],
+      design_source: ["code", "pptx", "svg"],
       element_type: [
         "text",
         "image",
@@ -5940,6 +7081,7 @@ export const Constants = {
       ],
       game_source: ["manual", "ai", "text", "file", "presentation"],
       game_status: ["generating", "draft", "ready", "archived", "failed"],
+      jelement_status: ["draft", "published", "archived"],
       job_status: ["queued", "running", "succeeded", "failed", "cancelled"],
       jslayd_design_status: ["draft", "published", "archived"],
       marketplace_file_kind: ["main", "study_guide", "preview"],
@@ -6027,6 +7169,37 @@ export const Constants = {
       qr_video_surface: ["taqdimot", "oyingoh"],
       seller_ledger_status: ["pending", "approved", "paid", "reversed"],
       settlement_status: ["draft", "pending", "paid", "cancelled"],
+      slide_story_role: [
+        "welcome",
+        "introduction",
+        "overview",
+        "key_concepts",
+        "importance",
+        "types",
+        "structure",
+        "process",
+        "methods",
+        "analysis",
+        "challenges",
+        "solutions",
+        "applications",
+        "examples",
+        "results",
+        "recommendations",
+        "conclusion",
+        "thanks",
+        "agenda",
+        "timeline",
+        "comparison",
+        "big_number",
+        "quote",
+        "case_study",
+        "data",
+        "chart",
+        "table",
+        "image_story",
+        "references",
+      ],
       step_status: ["queued", "running", "succeeded", "failed", "skipped"],
       subscription_status: [
         "inactive",
@@ -6051,4 +7224,3 @@ export const Constants = {
     },
   },
 } as const
-

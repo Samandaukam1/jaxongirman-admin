@@ -36,8 +36,44 @@ export type SlideData = {
   table: TableData | null;
   /** Resolved pictures, keyed by the archetype's image slot id (§27). */
   images: Record<string, ImageRef | null>;
+  /**
+   * Resolved JElements, keyed by the same slot ids.
+   *
+   * Already drawn to rows by the caller, so this package never imports the
+   * element library: JSLAYD decides where a visual goes and how big it is, and
+   * an element is one kind of thing that can go there. Keeping the two apart at
+   * this seam is what lets either be changed without the other.
+   */
+  elements: Record<string, readonly PlacedShape[]>;
   sources: string[];
   meta: DeckMeta;
+};
+
+/**
+ * One shape of a drawn element, in the element's own 0–1 space.
+ *
+ * Positioned relative to the slot rather than the slide, so the design stays in
+ * charge of where the visual sits: moving the slot moves the object, and the
+ * object never has to know what it was placed into.
+ */
+export type PlacedShape = {
+  /**
+   * A library element is either drawn or photographed.
+   *
+   * Defaults to a shape, because everything that existed before this field did
+   * was one, and a stored deck must keep rendering exactly as it did.
+   */
+  type?: "shape" | "image";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  zIndex: number;
+  opacity: number;
+  style: Record<string, unknown>;
+  /** The picture's address, for an image. */
+  content?: Record<string, unknown>;
 };
 
 export type DeckMeta = {
@@ -73,6 +109,20 @@ export function resolveBinding(binding: Binding, slide: SlideData): string | nul
     case "subtitle": return clean(slide.subtitle) || null;
     case "body": return clean(slide.body) || null;
     case "bullets": return slide.bullets.length ? slide.bullets.map(clean).filter(Boolean).join("\n") : null;
+    /**
+     * One bullet each, in order, for a page built as parallel columns.
+     *
+     * A slide with two points on a three-column page fills two columns and the
+     * third drops out — an element whose binding resolves to nothing is not
+     * drawn — which is the right answer: a column repeating one of the others
+     * is worse than a page that used two of its three.
+     */
+    case "bullet_1": case "bullet_2": case "bullet_3":
+    case "bullet_4": case "bullet_5": case "bullet_6": {
+      const at = Number(binding.slice("bullet_".length)) - 1;
+      const items = slide.bullets.map(clean).filter(Boolean);
+      return items[at] ?? null;
+    }
     case "purpose": return slide.purpose;
     case "section_label": return clean(slide.meta.sectionLabel) || null;
     case "author": return clean(slide.meta.author) || null;
@@ -165,6 +215,7 @@ export function previewSlide(purpose: ArchetypePurpose, index = 0, total = 8): S
       ],
     },
     images: {},
+    elements: {},
     sources: ["Jaxongir AI ichki tahlili, 2025", "O'zbekiston statistika qo'mitasi"],
     meta: { ...DEFAULT_META },
   };

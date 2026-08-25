@@ -31,7 +31,6 @@ export type DesignRow = Database["public"]["Functions"]["admin_list_designs"]["R
 export type DesignStatus = Database["public"]["Enums"]["jslayd_design_status"];
 
 export const FONT_BUCKET = "design-fonts";
-export const PREVIEW_BUCKET = "design-previews";
 
 export type CompileOutcome = {
   document: JslaydDocument | null;
@@ -77,10 +76,33 @@ export function allPreviewsOf(document: JslaydDocument, family?: string | null) 
   return renderAllPreviews(document, family);
 }
 
+export type DesignSource = Database["public"]["Enums"]["design_source"];
+
+/**
+ * A PowerPoint template's own cover picture.
+ *
+ * `docProps/thumbnail.jpeg` out of the uploaded package — the first slide as
+ * PowerPoint rasterised it — copied into the public asset bucket at import.
+ * Null for a written design, which draws its own preview instead.
+ */
+export function templateCoverUrl(path: string | null): string | null {
+  if (!path) return null;
+  return supabase.storage.from("design-assets").getPublicUrl(path).data.publicUrl;
+}
+
 export async function listDesigns(filters: {
   status?: DesignStatus | null;
   tier?: Tier | null;
   query?: string;
+  /**
+   * Which kind of design to list.
+   *
+   * The two are one table and two different things: a written design compiles
+   * and is drawn, an imported one is a PowerPoint package that gets cloned.
+   * They have separate screens because almost nothing an admin does to one
+   * makes sense for the other.
+   */
+  source?: DesignSource | null;
 }): Promise<DesignRow[]> {
   const { data, error } = await supabase.rpc("admin_list_designs", {
     p_status: filters.status ?? undefined,
@@ -88,9 +110,109 @@ export async function listDesigns(filters: {
     p_query: filters.query?.trim() || undefined,
     p_limit: 200,
     p_offset: 0,
+    p_source: filters.source ?? undefined,
   });
   if (error) throw error;
   return data ?? [];
+}
+
+/** One page of an imported template, as the editor shows it. */
+export type TemplatePageRow = {
+  archetypeId: string;
+  sourceIndex: number;
+  role: string;
+  recommendedStoryPosition: number;
+  isTerminal: boolean;
+  /** How many editable text boxes the source slide has. Zero means re-import. */
+  boxes: number;
+};
+
+export type TemplateDetail = {
+  id: string;
+  slug: string;
+  name: string;
+  tier: Tier;
+  description: string;
+  premium: boolean;
+  keywords: { keyword: string; score: number }[];
+  pages: TemplatePageRow[];
+  /** Which version the pages were read from, so the editor can say so. */
+  version: number;
+};
+
+/**
+ * A template and its pages, for editing.
+ *
+ * Pages are read at the highest version that has any, rather than at the
+ * published one: an unpublished template has them at version 1 and a published
+ * one carries them forward, so the newest set is always the right set.
+ */
+export async function loadTemplate(id: string): Promise<TemplateDetail> {
+  const [design, profiles] = await Promise.all([
+    supabase.from("presentation_designs")
+      .select("id, slug, name, tier, description, is_premium, keywords, design_source")
+      .eq("id", id).single(),
+    supabase.from("design_slide_profiles")
+      .select("archetype_id, design_version, source_index, role, recommended_story_position, is_terminal, text_map")
+      .eq("design_id", id)
+      .order("design_version", { ascending: false })
+      .order("source_index"),
+  ]);
+  if (design.error) throw design.error;
+  if (profiles.error) throw profiles.error;
+  if (design.data.design_source !== "pptx") throw new Error("Bu dizayn PowerPoint shabloni emas.");
+
+  const rows = profiles.data ?? [];
+  const version = rows.length > 0 ? Math.max(...rows.map((row) => row.design_version)) : 1;
+
+  return {
+    id: design.data.id,
+    slug: design.data.slug,
+    name: design.data.name,
+    tier: design.data.tier as Tier,
+    description: design.data.description,
+    premium: design.data.is_premium,
+    keywords: Array.isArray(design.data.keywords)
+      ? (design.data.keywords as { keyword: string; score: number }[])
+      : [],
+    version,
+    pages: rows
+      .filter((row) => row.design_version === version)
+      .map((row) => ({
+        archetypeId: row.archetype_id,
+        sourceIndex: row.source_index,
+        role: row.role as string,
+        recommendedStoryPosition: row.recommended_story_position,
+        isTerminal: row.is_terminal,
+        boxes: Array.isArray(row.text_map) ? row.text_map.length : 0,
+      })),
+  };
+}
+
+export async function updateTemplate(input: {
+  id: string;
+  name: string;
+  tier: Tier;
+  description: string;
+  premium: boolean;
+  /** Omitted leaves the stored subjects alone; an empty list is not sent. */
+  keywords?: { keyword: string; score: number }[];
+  pages: { archetypeId: string; role: string; recommendedStoryPosition: number }[];
+}): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_template", {
+    p_design_id: input.id,
+    p_name: input.name,
+    p_tier: input.tier,
+    p_description: input.description,
+    p_is_premium: input.premium,
+    ...(input.keywords && input.keywords.length > 0 ? { p_keywords: input.keywords } : {}),
+    p_pages: input.pages.map((page) => ({
+      archetype_id: page.archetypeId,
+      role: page.role,
+      recommended_story_position: page.recommendedStoryPosition,
+    })),
+  });
+  if (error) throw error;
 }
 
 export async function loadDesign(id: string) {
@@ -113,7 +235,6 @@ export type SaveInput = {
   premium: boolean;
   source: string;
   outcome: CompileOutcome;
-  thumbnailPath: string | null;
 };
 
 export async function saveDesign(input: SaveInput): Promise<string> {
@@ -126,10 +247,13 @@ export async function saveDesign(input: SaveInput): Promise<string> {
     p_is_premium: input.premium,
     p_source_prompt: input.source,
     p_compiled_config: (input.outcome.document ?? null) as never,
+    // The design's own cover, rendered by the engine that will draw the deck.
+    // There is no uploaded picture beside it any more: a hand-made JPEG was a
+    // second version of the design that nothing kept in step, so a design could
+    // advertise a look it no longer had.
     p_preview: (input.outcome.document ? previewOf(input.outcome.document) : {}) as never,
     p_content_hash: input.outcome.hash ?? undefined,
     p_health_score: input.outcome.health?.score ?? undefined,
-    p_thumbnail_path: input.thumbnailPath ?? undefined,
   });
   if (error) throw error;
   return data as string;
@@ -144,6 +268,33 @@ export async function publishDesign(id: string): Promise<number> {
 export async function archiveDesign(id: string, reason: string | null) {
   const { error } = await supabase.rpc("admin_archive_design", { p_design_id: id, p_reason: reason ?? undefined });
   if (error) throw error;
+}
+
+/**
+ * Removes a design and the files it owned.
+ *
+ * The row goes first and the objects after, which is the order that fails
+ * safely: an object with no row is litter nobody sees, while a row pointing at
+ * a deleted object is a design that renders a missing font.
+ *
+ * A sweep that fails is not raised. The design is gone by then, and telling an
+ * admin the delete failed — when what failed was tidying up after it — would
+ * have them press the button again on something that no longer exists.
+ */
+export async function deleteDesign(id: string, force = false): Promise<void> {
+  const { data, error } = await supabase.rpc("admin_delete_design", { p_design_id: id, p_force: force });
+  if (error) throw error;
+
+  const paths = (data ?? {}) as { fonts?: string[]; sources?: string[] };
+  const fonts = (paths.fonts ?? []).filter(Boolean);
+  const sources = (paths.sources ?? []).filter(Boolean);
+
+  try {
+    if (fonts.length) await supabase.storage.from(FONT_BUCKET).remove(fonts);
+    if (sources.length) await supabase.storage.from(TEMPLATE_BUCKET).remove(sources);
+  } catch {
+    // Deliberately swallowed; see above.
+  }
 }
 
 export async function restoreDesign(id: string) {
@@ -201,16 +352,6 @@ export async function uploadFont(params: {
   });
   if (error) throw error;
   return `${params.slug}/${fileName}`;
-}
-
-export async function uploadThumbnail(slug: string, file: File): Promise<string> {
-  const extension = file.name.toLowerCase().split(".").pop() ?? "png";
-  const key = `${slug}/cover.${extension}`;
-  const { error } = await supabase.storage
-    .from(PREVIEW_BUCKET)
-    .upload(key, file, { upsert: true, contentType: file.type || "image/png" });
-  if (error) throw error;
-  return key;
 }
 
 export type DesignFontFace = {
@@ -299,4 +440,146 @@ export function downloadDocument(document: JslaydDocument) {
   anchor.download = `${document.design.slug}.jslayd`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+/* ------------------------------------------------- PowerPoint templates */
+
+/**
+ * Importing a design somebody built in PowerPoint.
+ *
+ * The file goes to storage first and only its path is sent, for the same
+ * reason a user's deck does: a fifty-megabyte body through a function is a bad
+ * trade when the bucket already accepts one directly and checks who is
+ * uploading while it does.
+ *
+ * Two calls, and the first writes nothing — `inspect` says what would happen so
+ * an admin decides before a catalogue entry exists. The pages that come back
+ * are then sent up again with the import, because a classifier is not obliged
+ * to answer the same way twice and "what you approved is what was stored" has
+ * to be true.
+ */
+export const TEMPLATE_BUCKET = "design-source";
+
+export type TemplatePage = {
+  archetypeId: string;
+  sourceIndex: number;
+  purpose: string;
+  role: string;
+  recommendedStoryPosition: number;
+  textSlots: number;
+  /**
+   * Every editable text box of the source slide.
+   *
+   * Distinct from `textSlots`, which counts the fields the preview draws. This
+   * is what the exported file has replaced, and a page with none is a page no
+   * export can produce.
+   */
+  boxes?: number;
+  imageSlots: number;
+  artwork: number;
+};
+
+export type TemplateReport = {
+  ok: boolean;
+  code: "inspected" | "imported" | "rejected" | "duplicate";
+  designId?: string;
+  design?: { name: string; slug: string } | null;
+  name?: string;
+  slides?: number;
+  pages?: TemplatePage[];
+  fonts?: string[];
+  keywords?: { keyword: string; score: number }[];
+  warnings?: string[];
+  colors?: Record<string, string>;
+  problems?: { code: string; message: string; part?: string }[];
+  message?: string;
+};
+
+/** Where one admin's uploads live, so a listing is never somebody else's. */
+export async function uploadTemplate(file: File): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser();
+  const owner = auth.user?.id ?? "unknown";
+  const stamp = new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14);
+  const path = `templates/${owner}/${stamp}-${file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-80)}`;
+  const { error } = await supabase.storage.from(TEMPLATE_BUCKET).upload(path, file, {
+    contentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    upsert: false,
+  });
+  if (error) throw error;
+  return path;
+}
+
+export async function inspectTemplate(input: {
+  storagePath: string;
+  originalName: string;
+  name?: string;
+}): Promise<TemplateReport> {
+  return callTemplate({ ...input, step: "inspect" });
+}
+
+export async function importTemplate(input: {
+  storagePath: string;
+  originalName: string;
+  name: string;
+  slug: string;
+  tier: Tier;
+  premium: boolean;
+  pages: { archetypeId: string; role: string; recommendedStoryPosition: number }[];
+  /** From the pasted analysis, when there is one. Replaces the model's guess. */
+  keywords?: { keyword: string; score: number }[];
+}): Promise<TemplateReport> {
+  return callTemplate({ ...input, step: "import" });
+}
+
+/** The closed list both the analyst and the selector choose subjects from. */
+export async function listTopics(): Promise<{ slug: string; label: string }[]> {
+  const { data, error } = await supabase
+    .from("design_topics")
+    .select("slug, label_uz")
+    .order("sort_order");
+  if (error) throw error;
+  return (data ?? []).map((row) => ({ slug: row.slug as string, label: row.label_uz as string }));
+}
+
+/**
+ * The function's refusals are answers, not failures.
+ *
+ * A package with macros and a file already imported both come back with a
+ * status the client is meant to read and show. Letting `functions.invoke` turn
+ * them into a generic error would lose exactly the part an admin needs: which
+ * rule, and which part of the file.
+ */
+async function callTemplate(body: Record<string, unknown>): Promise<TemplateReport> {
+  const { data, error } = await supabase.functions.invoke("import-design-pptx", { body });
+  if (!error) return data as TemplateReport;
+
+  const context = (error as { context?: unknown }).context;
+  if (context && typeof (context as Response).json === "function") {
+    try {
+      const detail = await (context as Response).json();
+      if (detail && typeof detail === "object" && "code" in detail) return detail as TemplateReport;
+      if (detail && typeof detail === "object" && "error" in detail) {
+        throw new Error(String((detail as { error: unknown }).error));
+      }
+    } catch (readError) {
+      if (readError instanceof Error && readError.message) throw readError;
+    }
+  }
+  throw error;
+}
+
+export type FontResolution = { font: string; name: string; faces: number; source: string; note?: string };
+
+/**
+ * Fetches the typefaces a design named but does not ship.
+ *
+ * Server-side because it reaches an outside host and writes to a shared shelf:
+ * a family downloaded for one design is there for the next, and deciding that
+ * in a browser would mean every admin's tab racing the others for the same
+ * file.
+ */
+export async function resolveDesignFonts(designId: string): Promise<FontResolution[]> {
+  const { data, error } = await supabase.functions.invoke("resolve-design-fonts", { body: { designId } });
+  if (error) throw error;
+  return ((data as { fonts?: FontResolution[] })?.fonts ?? []);
 }

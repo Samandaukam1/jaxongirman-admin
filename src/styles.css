@@ -146,7 +146,17 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
 .table-skeleton { padding: 14px; display: grid; gap: 9px; }
 .table-skeleton span { height: 50px; border-radius: 9px; background: linear-gradient(90deg,var(--surface-muted) 20%,var(--surface) 45%,var(--surface-muted) 70%); background-size: 300% 100%; animation: shimmer 1.3s infinite; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; padding: 22px; display: grid; place-items: center; background: rgba(24,14,42,.55); backdrop-filter: blur(5px); }
-.modal-card { position: relative; width: min(500px, 100%); padding: 32px; border-radius: 20px; background: #fff; box-shadow: 0 30px 90px rgba(24,10,48,.3); }
+/* Capped at the viewport so the card can never overflow past both edges at
+ * once, which is what left a long dialog with no reachable top and no
+ * reachable submit button. The body inside it does the scrolling. */
+.modal-card {
+  position: relative; width: min(500px, 100%);
+  max-height: calc(100dvh - 44px);
+  display: flex; flex-direction: column;
+  border-radius: 20px; background: #fff; box-shadow: 0 30px 90px rgba(24,10,48,.3);
+}
+.modal-head { padding: 32px 32px 0; flex: none; }
+.modal-body { padding: 14px 32px 32px; overflow-y: auto; overscroll-behavior: contain; }
 .modal-card h2 { margin: 7px 0 8px; font-size: 27px; }
 .modal-close { position: absolute; top: 15px; right: 15px; width: 34px; height: 34px; color: var(--ink-muted); border: 1px solid var(--border); border-radius: 9px; background: white; font-size: 22px; }
 .modal-card textarea { min-height: 100px; padding: 13px; resize: vertical; }
@@ -211,7 +221,8 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
   .search-box, .toolbar > select { width: 100%; }
   .settings-list article { grid-template-columns: 1fr; }
   .settings-list textarea { grid-column: auto; grid-row: auto; min-width: 0; }
-  .modal-card { padding: 26px 20px 22px; }
+  .modal-head { padding: 26px 20px 0; }
+  .modal-body { padding: 12px 20px 22px; }
 }
 
 /* A labelled toggle that sits on the same baseline grid as the text inputs
@@ -500,3 +511,281 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
 .tariff-detail .is-absent dd { color: var(--ink-soft); }
 
 @media (max-width: 1100px) { .tariff-builder { grid-template-columns: 1fr; } .tariff-preview { position: static; } }
+
+/* ------------------------------------------------------------ JElement ---- */
+
+/* A library page reads as a grid of families, not a table: what an admin is
+ * scanning for is a look, and a look does not fit in a row. */
+.stat-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.stat-card {
+  display: grid; gap: 4px; padding: 16px 18px; border: 1px solid var(--border);
+  border-radius: 14px; background: var(--surface);
+}
+.stat-label { font-size: 12px; color: var(--ink-muted); }
+.stat-value { font-size: 26px; letter-spacing: -.02em; }
+
+.family-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.family-card { display: grid; gap: 16px; align-content: start; }
+.family-card > header { display: flex; justify-content: space-between; align-items: start; gap: 14px; }
+.family-card h2 { margin: 0; font-size: 19px; }
+.family-meta { margin: 4px 0 0; font-size: 13px; color: var(--ink-muted); }
+
+/* The colour roles, shown as themselves. An admin changing an accent wants to
+ * see what they are changing, and a hex string is not that. */
+.token-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.token-swatch {
+  width: 26px; height: 26px; border-radius: 8px;
+  border: 1px solid var(--border-strong); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+}
+
+.family-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 18px; margin: 0; }
+.family-stats div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.family-stats dt { color: var(--ink-muted); }
+.family-stats dd { margin: 0; font-weight: 600; }
+
+.family-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.family-actions .primary-button,
+.family-actions .secondary-button { width: auto; margin: 0; min-height: 40px; padding: 0 16px; font-size: 13.5px; }
+
+.status-pill {
+  padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+  letter-spacing: .04em; white-space: nowrap;
+}
+.status-published { background: #E4F6F0; color: #0B6B50; }
+.status-draft { background: var(--brand-soft); color: var(--brand-ink); }
+.status-archived { background: #F2F0F6; color: var(--ink-muted); }
+
+/* The standard prompt is read and copied, not edited: monospace, scrollable,
+ * and never wider than the modal. */
+.prompt-block {
+  max-height: 52vh; overflow: auto; margin: 14px 0 0; padding: 16px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface-muted);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+.import-area {
+  width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--field); font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12.5px; line-height: 1.5; resize: vertical;
+}
+
+.import-report { display: grid; gap: 14px; margin-top: 16px; }
+
+/* Warnings are shown, never summarised into a number. A count tells an admin
+ * that something is wrong; only the sentence tells them what to fix. */
+.diagnostics { padding: 14px 16px; border-radius: 12px; font-size: 13px; }
+.diagnostics h3 { margin: 0 0 8px; font-size: 14px; }
+.diagnostics ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.diagnostics span { color: var(--ink-muted); }
+.diagnostics-error { background: #FCEBEF; color: #8C1D33; }
+.diagnostics-warning { background: #FDF6E9; color: #7A4B08; }
+
+.import-preview { padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.import-preview h3 { margin: 0; font-size: 17px; }
+.element-list { margin: 14px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 13px; }
+.element-list span { display: block; color: var(--ink-muted); font-size: 12px; }
+
+/* A score is a way of sorting; the deductions are what an admin acts on. Both
+ * are shown, and the deductions are never collapsed into the number. */
+.health-good { color: #0B6B50; }
+.health-fair { color: #7A4B08; }
+.health-poor { color: #8C1D33; }
+.deduction-list {
+  margin: 6px 0 0; padding-left: 16px; display: grid; gap: 4px;
+  font-size: 12px; color: var(--ink-muted);
+}
+.deduction-list em { font-style: normal; opacity: .85; }
+
+/* An element, actually drawn — the same renderer the server uses, so this is
+ * what a slide gets rather than an approximation of it. */
+.jelement-preview {
+  position: relative; overflow: hidden; border-radius: 12px;
+  border: 1px solid var(--border); flex: none;
+}
+.jelement-preview-empty {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 11px; color: var(--ink-soft);
+}
+
+.token-editor { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.token-field { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.token-field > span { min-width: 78px; color: var(--ink-muted); }
+.token-field input[type="color"] {
+  width: 40px; height: 32px; padding: 0; border: 1px solid var(--border-strong);
+  border-radius: 8px; background: none; cursor: pointer;
+}
+.token-field code { font-size: 11.5px; color: var(--ink-soft); }
+
+.element-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.element-card {
+  position: relative;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+}
+.element-card:hover { border-color: var(--border-strong); }
+.element-card.is-selected { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
+.element-card strong { font-size: 13.5px; }
+
+/* Two grounds, three sizes, four angles: where detail disappears and a colour
+ * binding turns out wrong. None of it shows on one large preview on white. */
+.preview-matrix { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+.preview-matrix figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
+.preview-matrix figcaption { font-size: 11px; color: var(--ink-soft); }
+
+/* ------------------------------------------------- JElement sheet cutter --- */
+
+/* A sheet arrives as one image and leaves as twelve elements. The grid below is
+ * the only place anybody can check that cut n really is element n, so the
+ * pairing is shown rather than assumed. */
+.sheet-controls { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.sheet-controls label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .07em; }
+.sheet-controls input { width: 86px; }
+.sheet-accent { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-muted); }
+.sheet-accent i { width: 18px; height: 18px; border-radius: 6px; border: 1px solid var(--border); }
+
+.sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; margin: 4px 0 18px; }
+.sheet-grid figure { display: grid; gap: 6px; margin: 0; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-muted); }
+/* Checkerboard, because these are transparent PNGs and a white square behind a
+ * white page edge hides exactly the mistake this preview is for. */
+.sheet-grid img {
+  width: 100%; height: 96px; object-fit: contain; border-radius: 8px;
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #eceaf2 25%, transparent 25%), linear-gradient(-45deg, #eceaf2 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eceaf2 75%), linear-gradient(-45deg, transparent 75%, #eceaf2 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+.sheet-grid figcaption { display: grid; gap: 2px; }
+.sheet-grid figcaption strong { font-size: 12.5px; line-height: 1.35; }
+.sheet-grid figcaption small { color: var(--ink-soft); font-size: 11.5px; }
+.sheet-grid .is-orphan { border-color: #e0b4b0; background: #fdf4f3; }
+
+/* The delete control sits beside the card's own button rather than inside it:
+ * a button within a button is invalid, and the click would land on whichever
+ * of them won. */
+.element-card-body {
+  display: grid; gap: 6px; justify-items: center; width: 100%;
+  padding: 14px 12px 12px; border: 0; border-radius: inherit; background: none;
+  font: inherit; color: inherit; text-align: center; cursor: pointer;
+}
+.element-card-delete {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff;
+  color: var(--ink-soft); opacity: 0; transition: opacity .12s ease, color .12s ease;
+}
+.element-card:hover .element-card-delete,
+.element-card-delete:focus-visible { opacity: 1; }
+.element-card-delete:hover { color: #b23b32; border-color: #e0b4b0; }
+.element-card-delete:disabled { opacity: .35; }
+
+/* A family divides the way its subject does, so the grid does too. */
+.element-section { display: grid; gap: 10px; margin-bottom: 22px; }
+.element-section-head {
+  display: flex; align-items: baseline; gap: 9px; margin: 0;
+  font-size: 12px; font-weight: 800; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.element-section-head span {
+  padding: 1px 7px; border-radius: 999px; background: var(--surface-muted);
+  font-size: 11px; letter-spacing: 0; color: var(--ink-muted);
+}
+
+/* Three steps, in order, so a half-finished import is visible as one. */
+.import-steps { display: flex; gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; flex-wrap: wrap; }
+.import-steps li {
+  padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--border); background: var(--surface-muted); color: var(--ink-soft);
+}
+.import-steps li.is-done { border-color: #b9dfc9; background: #f2fbf5; color: #17683f; }
+
+/* ------------------------------------------- PowerPoint template import ---- */
+
+.upload-drop {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 20px;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  cursor: pointer;
+  text-align: center;
+}
+.upload-drop:hover { border-color: var(--accent, #7b5cd6); }
+.upload-drop strong { font-size: 15px; }
+.upload-drop span { font-size: 13px; opacity: .7; max-width: 46ch; line-height: 1.5; }
+
+/* A refusal is a list an admin works through, so each rule gets its own line. */
+.problem-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.problem-list li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid #d9a441;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.problem-list li small { opacity: .6; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.spin { animation: admin-spin 1s linear infinite; vertical-align: -3px; }
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+
+/* ------------------------------------------------ the pasted analysis ----- */
+
+.code-input {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+  color: inherit;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+.code-input:focus { outline: 2px solid var(--accent, #7b5cd6); outline-offset: -1px; }
+
+.code-result { margin-top: 14px; display: grid; gap: 10px; }
+
+/* One row per subject: the name, how strongly it matches, and the number the
+   phone actually compares. The bar is there so a glance ranks them. */
+.match-list { display: grid; gap: 6px; }
+.match { display: grid; grid-template-columns: minmax(7rem, 12rem) 1fr 3rem; align-items: center; gap: 10px; font-size: 13px; }
+.match-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.match-bar { height: 6px; border-radius: 3px; background: var(--border-soft); overflow: hidden; }
+.match-bar i { display: block; height: 100%; background: var(--accent, #7b5cd6); border-radius: 3px; }
+.match-score { font-variant-numeric: tabular-nums; text-align: right; opacity: .75; }
+
+/**
+ * A PowerPoint template's own cover, in the templates list.
+ *
+ * The picture is what the row is about — an admin recognises a template by
+ * looking at it long before they read its slug — so it leads the cell and the
+ * name sits beside it.
+ */
+.template-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.template-cell > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.template-cover {
+  width: 104px;
+  aspect-ratio: 16 / 9;
+  flex: none;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+}

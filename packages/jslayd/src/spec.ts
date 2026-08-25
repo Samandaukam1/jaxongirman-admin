@@ -219,7 +219,20 @@ export const TEXT_EFFECTS = ["none", "shadow", "stroke", "outline", "highlight",
 export type TextEffect = (typeof TEXT_EFFECTS)[number];
 
 /** Where a slot's picture comes from at generation time (§25). */
-export const IMAGE_SOURCE_STRATEGIES = ["internet_search", "ai_generated", "user_upload", "none"] as const;
+/**
+ * Where the picture in a slot comes from.
+ *
+ * `jelement` is the seam with the element library: the design says this slot
+ * wants a reusable object rather than a photograph, and something upstream
+ * finds one. JSLAYD still owns the geometry — the slot's box, its rounding, its
+ * z-order — and the element only fills it.
+ *
+ * `ai_generated` is kept because published designs declare it and dropping it
+ * would stop them compiling — but nothing generates any more. A slot asking for
+ * it is served by the same licensed photo search as `internet_search`, and the
+ * compiler says so. New designs should say what they mean.
+ */
+export const IMAGE_SOURCE_STRATEGIES = ["internet_search", "ai_generated", "user_upload", "jelement", "none"] as const;
 export type ImageSourceStrategy = (typeof IMAGE_SOURCE_STRATEGIES)[number];
 
 export const IMAGE_QUERY_SOURCES = ["slide_title", "slide_body", "keywords", "topic", "presentation_title"] as const;
@@ -293,6 +306,19 @@ export const BINDINGS = [
   "title", "subtitle", "body", "bullets", "purpose", "section_label",
   "author", "teacher", "date", "brand", "page_number", "slide_count",
   "quote_text", "quote_attribution",
+  /**
+   * One bullet each, for a page drawn as parallel columns.
+   *
+   * A design imported from a template routinely lays three or four peer text
+   * boxes across one band — three ways of saying the same kind of thing. There
+   * was no way to address them: one `bullets` binding draws one list, and
+   * binding all four to it would repeat the same list four times. So the
+   * surplus boxes were dropped, and a four-column page arrived as a one-column
+   * page with three holes.
+   *
+   * Six is past what any composition uses and short of a list nobody reads.
+   */
+  "bullet_1", "bullet_2", "bullet_3", "bullet_4", "bullet_5", "bullet_6",
   "stat_value", "stat_label", "stat_1", "stat_2", "stat_3",
   "chart_data", "chart_title",
   "table_data", "table_title",
@@ -330,6 +356,18 @@ export function toSlug(value: string): string | null {
     .replace(/-+$/, "");
   return SLUG_PATTERN.test(slug) && slug.length >= 3 ? slug : null;
 }
+/**
+ * Where a design's own pictures live.
+ *
+ * Public, like the font bucket, because every renderer has to fetch them —
+ * the phone, the web preview, both exporters — and a signed URL that expires
+ * is a design that stops drawing after an hour.
+ */
+export const DESIGN_ASSET_BUCKET = "design-assets";
+
+/** A design asset is a file name inside the design's own folder, never a path. */
+export const ASSET_NAME_PATTERN = /^[a-z0-9][a-z0-9._-]*\.(png|jpg|jpeg|webp|svg)$/i;
+
 export const IDENTIFIER_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;

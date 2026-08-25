@@ -1,18 +1,18 @@
 import { decompile, SAMPLE_PROMPT, SLUG_PATTERN, TIERS, TIER_LABELS, toSlug, type Tier } from "@jaxongirman/jslayd";
 import { ScaledSlide } from "@jaxongirman/slide-dom";
-import { Download, Plus, Search, Upload } from "lucide-react";
+import { Download, Plus, Rocket, Search, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { EmptyState, ErrorState, PageHeader, StatusBadge, TableSkeleton } from "@/components/AdminUI";
 import { DiagnosticList, JslaydEditor } from "@/components/JslaydEditor";
 import { JslaydStandardCard } from "@/components/JslaydStandard";
+import { archive, duplicate, publish, remove, restore } from "@/lib/design-actions";
 import { dateTime, errorMessage } from "@/lib/format";
+import { useDismissable } from "@/lib/router";
 import {
   allPreviewsOf,
-  archiveDesign,
   compilePrompt,
   downloadDocument,
-  duplicateDesign,
   editableSource,
   importDocument,
   listDesignFonts,
@@ -20,14 +20,10 @@ import {
   listDesigns,
   loadDesign,
   previewOf,
-  publicAssetUrl,
   publishDesign,
-  restoreDesign,
   saveDesign,
   toCanvas,
   uploadFont,
-  uploadThumbnail,
-  PREVIEW_BUCKET,
   type CompileOutcome,
   type DesignFontFace,
   type DesignRow,
@@ -58,7 +54,6 @@ type Draft = {
   source: string;
   /** True when the text was recovered from the compiled design, not authored. */
   recovered: boolean;
-  thumbnailPath: string | null;
 };
 
 const BLANK: Draft = {
@@ -70,7 +65,6 @@ const BLANK: Draft = {
   premium: false,
   source: SAMPLE_PROMPT,
   recovered: false,
-  thumbnailPath: null,
 };
 
 export function JslaydDesignsPage() {
@@ -83,6 +77,7 @@ export function JslaydDesignsPage() {
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
 
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -91,6 +86,10 @@ export function JslaydDesignsPage() {
         status: status === "all" ? null : status,
         tier: tier === "all" ? null : tier,
         query,
+        // Written designs only. An imported PowerPoint template is never
+        // compiled, never drawn and never edited here — it has its own section,
+        // because almost every control on this screen is about authoring.
+        source: "code",
       }));
     } catch (requestError) {
       setError(errorMessage(requestError));
@@ -100,6 +99,16 @@ export function JslaydDesignsPage() {
   }, [query, status, tier]);
 
   useEffect(() => { void load(); }, [load]);
+
+  /**
+   * Back closes the screen you are on, rather than leaving the section.
+   *
+   * The editor and the importer are React state inside this page, so the
+   * browser never knew they opened — Back went wherever the person had been
+   * before `/jslayd`, which was the dashboard, from every single one of them.
+   */
+  const closeDraft = useCallback(() => { setDraft(null); void load(); }, [load]);
+  const dismissDraft = useDismissable(draft !== null, closeDraft);
 
   // Sorting is client-side: the listing RPC caps at 200 rows, so the whole set
   // is already here and a round trip would only add latency.
@@ -113,12 +122,7 @@ export function JslaydDesignsPage() {
   }, [items, sort]);
 
   if (draft) {
-    return (
-      <Workbench
-        draft={draft}
-        onClose={() => { setDraft(null); void load(); }}
-      />
-    );
+    return <Workbench draft={draft} onClose={dismissDraft} />;
   }
 
   return (
@@ -207,8 +211,20 @@ export function JslaydDesignsPage() {
                       >
                         Nusxa
                       </button>
+                      {/* An archived design is withdrawn on purpose; publishing
+                          it from here would undo that decision by accident. */}
+                      {item.status === "archived" ? null : (
+                        <button
+                          className="primary-button compact"
+                          type="button"
+                          onClick={() => void publish(item, load, setError)}
+                        >
+                          <Rocket size={15} strokeWidth={1.9} />
+                          {item.published_version > 0 ? "Qayta chop etish" : "Chop etish"}
+                        </button>
+                      )}
                       {item.status === "archived" ? (
-                        <button className="secondary-button compact" type="button" onClick={() => void guard(() => restoreDesign(item.id), load, setError)}>
+                        <button className="secondary-button compact" type="button" onClick={() => void restore(item, load, setError)}>
                           Tiklash
                         </button>
                       ) : (
@@ -216,6 +232,16 @@ export function JslaydDesignsPage() {
                           Arxivlash
                         </button>
                       )}
+                      <button
+                        className="danger-button compact"
+                        type="button"
+                        title={item.used_by > 0
+                          ? `${item.used_by} ta taqdimot bu dizayn bilan yaratilgan`
+                          : "Dizaynni butunlay o‘chirish"}
+                        onClick={() => void remove(item, load, setError)}
+                      >
+                        <Trash2 size={15} strokeWidth={1.9} /> O‘chirish
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -226,31 +252,6 @@ export function JslaydDesignsPage() {
       </section>
     </div>
   );
-}
-
-async function guard(action: () => Promise<unknown>, reload: () => Promise<void>, onError: (message: string) => void) {
-  try {
-    await action();
-    await reload();
-  } catch (error) {
-    onError(errorMessage(error));
-  }
-}
-
-async function archive(item: DesignRow, reload: () => Promise<void>, onError: (message: string) => void) {
-  // Archiving is reversible and decks keep rendering from their pinned version,
-  // but a design in use is still worth pausing over.
-  const warning = item.used_by > 0
-    ? `«${item.name}» ${item.used_by} ta taqdimotda ishlatilgan. Arxivlash uni tanlash ro‘yxatidan olib tashlaydi, mavjud taqdimotlar ochilaveradi. Davom etamizmi?`
-    : `«${item.name}» arxivlansinmi?`;
-  if (!window.confirm(warning)) return;
-  await guard(() => archiveDesign(item.id, null), reload, onError);
-}
-
-async function duplicate(item: DesignRow, reload: () => Promise<void>, onError: (message: string) => void) {
-  const slug = window.prompt("Yangi slug", `${item.slug}-copy`);
-  if (!slug) return;
-  await guard(() => duplicateDesign(item.id, slug, `${item.name} Copy`), reload, onError);
 }
 
 async function openDesign(id: string, setDraft: (draft: Draft) => void, onError: (message: string) => void) {
@@ -273,7 +274,6 @@ async function openDesign(id: string, setDraft: (draft: Draft) => void, onError:
       premium: design.is_premium,
       source,
       recovered,
-      thumbnailPath: design.thumbnail_path,
     });
   } catch (error) {
     onError(errorMessage(error));
@@ -302,7 +302,6 @@ function ImportButton({ onImported }: { onImported: (draft: Draft) => void }) {
       premium: document.design.premium,
       source: decompile(document),
       recovered: true,
-      thumbnailPath: null,
     });
   }
 
@@ -367,6 +366,30 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
     return () => window.clearTimeout(timer);
   }, [form, saved]);
 
+  /**
+   * The preview follows the prompt, without being asked.
+   *
+   * It used to appear only after the check button was pressed, which meant
+   * opening a design showed its text and none of its design — an admin had to
+   * know that a button labelled "Tekshirish" was also the way to see the thing
+   * they had just made. The compiler runs in this tab and takes milliseconds,
+   * so there is no reason for a person to be the trigger.
+   *
+   * Errors stay silent here. A prompt is invalid for most of the time somebody
+   * is typing one, and shouting about it mid-word is noise; the button still
+   * reports properly when it is pressed, and the errors below it are drawn from
+   * the same outcome.
+   */
+  useEffect(() => {
+    let live = true;
+    const timer = window.setTimeout(() => {
+      void compilePrompt(form.source)
+        .then((next) => { if (live) setOutcome(next); })
+        .catch(() => {});
+    }, 350);
+    return () => { live = false; window.clearTimeout(timer); };
+  }, [form.source]);
+
   // A reload with work in hand still deserves the browser's own warning: the
   // local copy is a safety net, not a reason to lose the admin's place.
   useEffect(() => {
@@ -383,9 +406,10 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
   function restoreKept() {
     if (!kept) return;
     setForm(kept.draft);
-    setOutcome(null);
     setKept(null);
-    setMessage("Saqlanmagan tahrir tiklandi. Ko‘rinishni yangilash uchun qayta tekshiring.");
+    // The preview recompiles itself from the restored text, so there is nothing
+    // left to ask the admin to do.
+    setMessage("Saqlanmagan tahrir tiklandi.");
   }
 
   function discardKept() {
@@ -471,7 +495,6 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
         premium: form.premium,
         source: form.source,
         outcome: compiled,
-        thumbnailPath: form.thumbnailPath,
       });
       setForm((current) => ({ ...current, id, slug, name }));
       // The recovered text is now the design's own prompt, so the notice
@@ -578,35 +601,7 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
       </section>
 
       <section className="panel">
-        <h3>2. Muqova rasmi</h3>
-        <p className="panel-hint">
-          Uslub tanlash ekranida ko‘rinadigan rasm. Bu taqdimotning muqova slaydi emas — dizaynning o‘z tanishtiruv rasmi.
-        </p>
-        <div className="jslayd-cover">
-          {form.thumbnailPath ? (
-            <img src={publicAssetUrl(PREVIEW_BUCKET, form.thumbnailPath) ?? ""} alt="Muqova" />
-          ) : (
-            <div className="jslayd-cover-empty">Rasm yuklanmagan</div>
-          )}
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            disabled={!form.slug}
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (!file || !form.slug) return;
-              try {
-                set("thumbnailPath", await uploadThumbnail(form.slug, file));
-              } catch (requestError) {
-                setError(errorMessage(requestError));
-              }
-            }}
-          />
-        </div>
-      </section>
-
-      <section className="panel">
-        <h3>3. Fontlar</h3>
+        <h3>2. Fontlar</h3>
         <p className="panel-hint">
           1-shrift majburiy, 2–4 ixtiyoriy. .ttf, .otf va .woff qabul qilinadi — WOFF2 emas, chunki PDF eksporti uni
           joylay olmaydi. PPTX’da maxsus shrift ochuvchining kompyuterida almashtirilishi mumkin.
@@ -650,7 +645,7 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
       </section>
 
       <section className="panel">
-        <h3>4. JSLAYD prompt</h3>
+        <h3>3. JSLAYD prompt</h3>
         <JslaydEditor
           value={form.source}
           onChange={(next) => { set("source", next); setOutcome(null); }}
@@ -692,7 +687,7 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
 
       {cover ? (
         <section className="panel">
-          <h3>5. Jonli ko‘rinish</h3>
+          <h3>4. Jonli ko‘rinish</h3>
           <p className="panel-hint">
             Bu haqiqiy renderer va namunaviy ma’lumot. Foydalanuvchi paneli ham, eksport ham ayni shu modeldan chizadi.
           </p>

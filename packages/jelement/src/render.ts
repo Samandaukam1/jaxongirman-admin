@@ -1,0 +1,314 @@
+import type { Component, ElementPlacement, JElement, JElementFamily } from "./document.ts";
+import type { ColorToken } from "./spec.ts";
+
+/**
+ * An element, drawn.
+ *
+ * This began as boxes only — a rectangle with a corner radius, a colour and a
+ * rotation — on the reasoning that it would ship without teaching the web view,
+ * the phone and the PPTX exporter a new primitive. The escape hatch for
+ * anything that needed a real outline was "it ships as an asset instead", and
+ * that hatch was never built: there is no asset field on `JElement`.
+ *
+ * So a mining truck was a stack of rectangles, a pickaxe was a rectangle, and
+ * an ore fragment was a rectangle. The compiler read `shape: path` and its `d`
+ * string, stored both, and the renderer dropped them on the floor — every
+ * element in the library came out as the same pile of blocks whatever the
+ * analyzer had drawn.
+ *
+ * Paths now survive. A component with `shape: path` carries its outline in
+ * `style.path`, authored in a 0–100 square that maps to that component's own
+ * box, so it scales, flips and rotates exactly like every other component and
+ * `box` still means what it always meant. Boxes remain for the parts that
+ * genuinely are boxes: a panel is not better for being a path.
+ */
+
+/** The shape a slide renderer consumes. Ids and slide keys are the caller's. */
+export type RenderedShape = {
+  type: "shape" | "image";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  zIndex: number;
+  opacity: number;
+  style: Record<string, unknown>;
+  content: Record<string, unknown>;
+};
+
+export type RenderTarget = {
+  /** Where the element sits on the slide, in the renderer's own units. */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  opacity?: number;
+  flipHorizontal?: boolean;
+  flipVertical?: boolean;
+};
+
+/**
+ * Resolves a component's colour.
+ *
+ * Three sources, in order: what this placement overrode, what the family says,
+ * and — for a layer marked not recolourable — the family value regardless of
+ * any override. Glass is glass; an accent change must not turn a cabin window
+ * into a lime panel.
+ */
+function colorFor(
+  token: ColorToken | null,
+  family: JElementFamily,
+  overrides: Partial<Record<ColorToken, string>>,
+  recolorable: boolean,
+): string | undefined {
+  if (!token) return undefined;
+  if (!recolorable) return family.colorTokens[token];
+  return overrides[token] ?? family.colorTokens[token];
+}
+
+/**
+ * Where a component lands, given where the element is.
+ *
+ * Component boxes are 0–1 inside the element's own bounds, so this is a
+ * straight projection — and because it is, an element scales without any part
+ * of it being recomputed by hand.
+ */
+function project(component: Component, target: RenderTarget): { x: number; y: number; width: number; height: number } {
+  const box = component.box;
+
+  // Flipping mirrors the component inside the element rather than negating the
+  // whole thing, so a truck facing right becomes one facing left and does not
+  // end up drawn off the far edge.
+  const x = target.flipHorizontal ? 1 - box.x - box.width : box.x;
+  const y = target.flipVertical ? 1 - box.y - box.height : box.y;
+
+  return {
+    x: target.x + x * target.width,
+    y: target.y + y * target.height,
+    width: box.width * target.width,
+    height: box.height * target.height,
+  };
+}
+
+/** The square a path's coordinates are authored in, mapped onto its own box. */
+export const PATH_VIEWBOX = "0 0 100 100";
+
+/** `circle` and `ellipse` are rectangles the renderers already round. */
+function radiusFor(component: Component, width: number, height: number): Record<string, unknown> {
+  if (component.shape === "circle" || component.shape === "ellipse") {
+    return { borderRadius: Math.min(width, height) / 2 };
+  }
+  if (component.shape === "roundedRect") {
+    return { borderRadius: Math.min(width, height) * 0.14 };
+  }
+  return {};
+}
+
+/**
+ * Which file to draw, given the colour the deck wants.
+ *
+ * The variants were produced when the sheet was cut up, one per accent a design
+ * might ask for, because neither a phone nor a PPTX can recolour a PNG. So the
+ * choice here is a lookup rather than an image operation: find the variant
+ * whose hue is nearest what was asked for, and fall back to the original file
+ * when nothing is close enough.
+ *
+ * Twenty degrees of tolerance. Wider starts serving a green asset to a deck
+ * that asked for teal, which reads as a mistake rather than a near miss.
+ */
+export function assetFor(element: JElement, accent: string | undefined, tolerance = 20): string | null {
+  const master = element.assetPath ?? null;
+  if (!master) return null;
+
+  // An object whose colour is its meaning does not follow the deck.
+  if (element.assetRecolorable === false) return master;
+
+  const wanted = accent ? hueOf(accent) : null;
+  if (wanted === null) return master;
+
+  // Already the right colour: the original file is the best quality available,
+  // having never been through a recolour at all.
+  const own = element.assetAccentHue;
+  if (typeof own === "number" && Math.abs(hueGap(own, wanted)) <= tolerance) return master;
+
+  let best: string | null = null;
+  let bestGap = tolerance;
+  for (const [hue, path] of Object.entries(element.assetVariants ?? {})) {
+    const gap = Math.abs(hueGap(Number(hue), wanted));
+    if (Number.isFinite(gap) && gap <= bestGap) { bestGap = gap; best = path; }
+  }
+  return best ?? master;
+}
+
+function hueOf(hex: string): number | null {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return null;
+  const value = parseInt(match[1]!, 16);
+  const r = ((value >> 16) & 255) / 255, g = ((value >> 8) & 255) / 255, b = (value & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === min) return null;
+  const span = max - min;
+  if (max === r) return ((g - b) / span + (g < b ? 6 : 0)) * 60;
+  if (max === g) return ((b - r) / span + 2) * 60;
+  return ((r - g) / span + 4) * 60;
+}
+
+function hueGap(first: number, second: number): number {
+  return ((second - first + 540) % 360) - 180;
+}
+
+export function renderElement(
+  element: JElement,
+  family: JElementFamily,
+  target: RenderTarget,
+  overrides: Partial<Record<ColorToken, string>> = {},
+): RenderedShape[] {
+  const rotation = target.rotation ?? 0;
+  const opacity = target.opacity ?? 1;
+
+  /**
+   * A picture is one row, not a stack of them.
+   *
+   * Checked before the components because an element that has both uses its
+   * components for placement — an anchor, a focus point — and its asset for
+   * the drawing. Emitting both would draw the boxes on top of the render.
+   */
+  const asset = assetFor(element, overrides.accent ?? family.colorTokens.accent);
+  if (asset) {
+    return [{
+      type: "image",
+      x: target.x, y: target.y, width: target.width, height: target.height,
+      rotation, zIndex: 0, opacity,
+      style: {},
+      // The path, not a URL. Resolving one to the other needs a storage client,
+      // and this module deliberately has none — the admin, the phone and the
+      // exporter each already know how to turn a bucket path into an address.
+      content: { assetPath: asset },
+    }];
+  }
+
+  return [...element.geometry.components]
+    .sort((first, second) => first.zIndex - second.zIndex)
+    .map((component): RenderedShape => {
+      const box = project(component, target);
+      const fill = colorFor(component.fill, family, overrides, component.recolorable);
+      const stroke = colorFor(component.stroke, family, overrides, component.recolorable);
+
+      return {
+        type: "shape",
+        ...box,
+        // A component's own angle and the placement's are added: a tilted
+        // pickaxe placed at -12° is tilted by both, which is what somebody
+        // rotating it on a slide expects to happen.
+        rotation: rotation + component.rotation,
+        zIndex: component.zIndex,
+        opacity: opacity * component.opacity,
+        style: {
+          /**
+           * `fill`, not `backgroundColor`.
+           *
+           * JSLAYD emits `fill` and both slide renderers read it, so an element
+           * emitting `backgroundColor` was drawing itself in the phone's
+           * default grey the moment it left the admin preview. Two vocabularies
+           * for one idea, and the one nobody read was ours.
+           */
+          ...(fill ? { fill } : {}),
+          ...(stroke && component.strokeWidth > 0
+            ? { borderColor: stroke, borderWidth: component.strokeWidth }
+            : {}),
+          ...radiusFor(component, box.width, box.height),
+          shape: component.shape === "roundedRect" ? "rect" : component.shape,
+          ...(component.shape === "polygon" || component.shape === "triangle"
+            ? { sides: component.shape === "triangle" ? 3 : 6 }
+            : {}),
+          /**
+           * The outline itself, when there is one.
+           *
+           * Carried in the component's own box rather than the element's, so a
+           * renderer draws it with `viewBox="0 0 100 100"` at the projected
+           * box and needs to know nothing about the element around it. A
+           * consumer that does not understand `path` still gets a correctly
+           * placed, correctly coloured rectangle, which is what every one of
+           * them drew before this existed.
+           */
+          ...(component.shape === "path" && component.path
+            ? { path: component.path, viewBox: PATH_VIEWBOX }
+            : {}),
+        },
+        content: {},
+      };
+    });
+}
+
+/**
+ * The box an element should occupy to appear a given size.
+ *
+ * A caller asking for "a quarter of the slide" means a quarter of what the eye
+ * sees, and `visualBounds` is where the mass reads — the rectangle can be much
+ * larger. Placing by the rectangle is what makes a diagonal object look
+ * off-centre and undersized on every slide it appears on.
+ */
+export function fitToBox(
+  element: JElement,
+  box: { x: number; y: number; width: number; height: number },
+): RenderTarget {
+  const visual = element.geometry.visualBounds;
+  const safeWidth = visual.width > 0 ? visual.width : 1;
+  const safeHeight = visual.height > 0 ? visual.height : 1;
+
+  // How big the whole element has to be for its visible part to fill the box,
+  // keeping the aspect ratio the object is recognisable at.
+  const scale = Math.min(box.width / safeWidth, box.height / safeHeight);
+  const width = scale;
+  const height = scale;
+
+  const visualLeft = box.x + (box.width - safeWidth * scale) / 2;
+  const visualTop = box.y + (box.height - safeHeight * scale) / 2;
+
+  return {
+    x: visualLeft - visual.x * width,
+    y: visualTop - visual.y * height,
+    width,
+    height,
+  };
+}
+
+/**
+ * Should this element be mirrored to face the slide's copy?
+ *
+ * A truck facing right, placed to the right of a paragraph, faces away from it
+ * — the composition reads as the object leaving. Flipping is allowed only when
+ * the element says it survives being flipped: text on a machine, a steering
+ * wheel, a right-handed tool do not.
+ */
+export function shouldFlip(element: JElement, contentSide: "left" | "right"): boolean {
+  if (!element.transform.flipHorizontal) return false;
+  const facing = element.geometry.naturalFacing;
+  if (facing === "front" || facing === "neutral") return false;
+  // Content on the left wants the object facing left, and vice versa.
+  return facing !== contentSide;
+}
+
+/** What the placement stores, so a deck can be redrawn exactly. */
+export function placementFor(
+  elementId: string,
+  version: number,
+  target: RenderTarget,
+  overrides: Partial<Record<ColorToken, string>> = {},
+): ElementPlacement {
+  return {
+    elementId,
+    elementVersion: version,
+    x: target.x,
+    y: target.y,
+    width: target.width,
+    height: target.height,
+    rotation: target.rotation ?? 0,
+    opacity: target.opacity ?? 1,
+    flipHorizontal: target.flipHorizontal ?? false,
+    flipVertical: target.flipVertical ?? false,
+    colorOverrides: overrides,
+  };
+}
