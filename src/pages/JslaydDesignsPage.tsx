@@ -1,4 +1,7 @@
-import { decompile, SAMPLE_PROMPT, SLUG_PATTERN, TIERS, TIER_LABELS, toSlug, type Tier } from "@jaxongirman/jslayd";
+import {
+  decompile, SAMPLE_PROMPT, SLUG_PATTERN, TIERS, TIER_LABELS, toSlug,
+  type FontDeclaration, type Tier,
+} from "@jaxongirman/jslayd";
 import { ScaledSlide } from "@jaxongirman/slide-dom";
 import { Download, Plus, Rocket, Search, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -6,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState, ErrorState, PageHeader, StatusBadge, TableSkeleton } from "@/components/AdminUI";
 import { DiagnosticList, JslaydEditor } from "@/components/JslaydEditor";
 import { JslaydStandardCard } from "@/components/JslaydStandard";
+import { StudioSection } from "@/components/StudioSection";
 import { archive, duplicate, publish, remove, restore } from "@/lib/design-actions";
 import { dateTime, errorMessage } from "@/lib/format";
 import { useDismissable } from "@/lib/router";
@@ -14,13 +18,16 @@ import {
   compilePrompt,
   downloadDocument,
   editableSource,
+  findFamilies,
   importDocument,
   listDesignFonts,
+  normalizeFamily,
   removeDesignFont,
   listDesigns,
   loadDesign,
   previewOf,
   publishDesign,
+  resolveDesignFonts,
   saveDesign,
   toCanvas,
   uploadFont,
@@ -28,6 +35,7 @@ import {
   type DesignFontFace,
   type DesignRow,
   type DesignStatus,
+  type LibraryFamily,
 } from "@/lib/jslayd";
 import { forgetDraft, keepDraft, recallDraft, sameDraft, type KeptDraft } from "@/lib/workbench-draft";
 
@@ -339,8 +347,30 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
   const [kept, setKept] = useState<KeptDraft<Draft> | null>(() => recallDraft(draft.id, draft));
   const [saved, setSaved] = useState(false);
 
+  /**
+   * Fields the author has taken over from the prompt.
+   *
+   * The prompt already declares a name, a slug, a tier, a description and
+   * whether the design is premium — and `save` has always fallen back to them,
+   * so the form's job was to restate what the text below it already said, in
+   * five boxes somebody had to copy by hand. Now the prompt fills them.
+   *
+   * Typing in a field claims it: from then on the prompt stops writing there,
+   * because a form that overwrites what you just typed every time the text
+   * recompiles is worse than one that stays empty.
+   */
+  const FILLED = ["name", "slug", "tier", "description", "premium"] as const;
+  const [claimed, setClaimed] = useState<Set<keyof Draft>>(() => new Set(
+    // A saved design opens showing what was saved. Its prompt and its stored
+    // tier can legitimately disagree — the dropdown is what `save` writes — and
+    // silently flipping a published design's tier on open would be the prompt
+    // overruling a decision somebody already made.
+    draft.id ? FILLED : [],
+  ));
+
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setSaved(false);
+    setClaimed((current) => (current.has(key) ? current : new Set(current).add(key)));
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -389,6 +419,92 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
     }, 350);
     return () => { live = false; window.clearTimeout(timer); };
   }, [form.source]);
+
+  /**
+   * The prompt fills the form, for every field nobody has claimed.
+   *
+   * Runs off the compiled document rather than off the text, so a half-typed
+   * `[DESIGN]` block does not put half a slug in the field and then take it
+   * back a keystroke later.
+   */
+  const design = outcome?.document?.design;
+  useEffect(() => {
+    if (!design) return;
+    setForm((current) => {
+      const next = { ...current };
+      let changed = false;
+      const fill = <K extends keyof Draft>(key: K, value: Draft[K]) => {
+        if (claimed.has(key) || current[key] === value) return;
+        next[key] = value;
+        changed = true;
+      };
+
+      fill("name", design.name);
+      fill("slug", design.slug);
+      fill("tier", design.tier);
+      fill("description", design.description);
+      fill("premium", design.premium);
+      return changed ? next : current;
+    });
+  }, [claimed, design]);
+
+  /**
+   * Which of the prompt's fonts the library already holds.
+   *
+   * Two thousand Google families are on the shelf, so naming one in the prompt
+   * should be the whole of "attaching a font" — the .ttf upload beside each
+   * slot exists for a face nobody can download, not for Montserrat.
+   */
+  const declaredFonts = outcome?.document?.fonts;
+  const [library, setLibrary] = useState<Map<string, LibraryFamily>>(new Map());
+  useEffect(() => {
+    if (!declaredFonts?.length) { setLibrary(new Map()); return; }
+    let live = true;
+    findFamilies(declaredFonts.map((font) => font.name))
+      .then((found) => { if (live) setLibrary(found); })
+      // A lookup that fails leaves the slots saying nothing about the library,
+      // which is the honest state — the upload path still works.
+      .catch(() => { if (live) setLibrary(new Map()); });
+    return () => { live = false; };
+  }, [declaredFonts]);
+
+  const libraryReady = useMemo(
+    () => (declaredFonts ?? [])
+      .map((font) => library.get(normalizeFamily(font.name)))
+      .filter((entry): entry is LibraryFamily => Boolean(entry)),
+    [declaredFonts, library],
+  );
+
+  const [attaching, setAttaching] = useState(false);
+
+  /**
+   * Copy every declared family out of the library and onto this design.
+   *
+   * The server does the work, because deciding what a family is and copying its
+   * faces has to happen once rather than in every admin's tab racing the
+   * others for the same files.
+   */
+  async function attachFromLibrary() {
+    if (!form.id) return;
+    setAttaching(true);
+    setError(null);
+    try {
+      const report = await resolveDesignFonts(form.id);
+      const attached = report.filter((entry) => entry.faces > 0);
+      const missing = report.filter((entry) => entry.faces === 0);
+      setMessage(
+        attached.length
+          ? `${attached.map((entry) => `${entry.name} (${entry.faces} face)`).join(", ")} biriktirildi.`
+            + (missing.length ? ` Topilmadi: ${missing.map((entry) => entry.name).join(", ")}.` : "")
+          : "Hech qanday shrift topilmadi.",
+      );
+      await loadFonts();
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setAttaching(false);
+    }
+  }
 
   // A reload with work in hand still deserves the browser's own warning: the
   // local copy is a safety net, not a reason to lose the admin's place.
@@ -442,7 +558,7 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
    * while the way to do that is further down the page and switched off is not
    * an instruction, it is a puzzle. So saving compiles on the way.
    */
-  async function save(thenPublish: boolean) {
+  async function save(thenPublish: boolean): Promise<string | null> {
     let ready = outcome;
     if (!ready?.document) {
       setBusy(true);
@@ -459,7 +575,7 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
       // a count on its own is not information, and neither is being sent
       // somewhere else to find out.
       setError("Prompt kompilyatsiya qilinmadi, shuning uchun qoralama saqlanmadi.");
-      return;
+      return null;
     }
     // Narrowed once, so the rest of the body is not re-proving it.
     const compiled = { ...ready, document: ready.document };
@@ -474,7 +590,7 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
         `Slug faqat kichik lotin harflari, raqamlar va chiziqchadan iborat bo‘ladi (3–64 belgi): “${slugToSave}”.`
         + (suggestion ? ` Masalan: “${suggestion}”.` : " Lotin harflaridan foydalaning."),
       );
-      return;
+      return null;
     }
 
     setBusy(true);
@@ -505,14 +621,39 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
       forgetDraft(draft.id);
       forgetDraft(id);
       setSaved(true);
+
+      /**
+       * Attached without being asked, the first time.
+       *
+       * Naming a family in the prompt is the whole of choosing a font when the
+       * library already holds it, so a design saved with matches and no faces
+       * yet gets them now. Only when nothing is attached: a design whose files
+       * somebody uploaded by hand is not one to overwrite from the shelf.
+       */
+      if (!fonts.length && libraryReady.length) {
+        try {
+          const report = await resolveDesignFonts(id);
+          const attached = report.filter((entry) => entry.faces > 0);
+          if (attached.length) {
+            setMessage(`Qoralama saqlandi. Kutubxonadan biriktirildi: ${attached.map((entry) => entry.name).join(", ")}.`);
+            await loadFonts();
+          }
+        } catch {
+          // The save succeeded; a font that did not attach is a button away and
+          // must not be reported as a failed save.
+        }
+      }
+
       if (thenPublish) {
         const version = await publishDesign(id);
         setMessage(`Chop etildi — v${version}. Foydalanuvchilar uni ilovani yangilamasdan ko‘radi.`);
       } else {
         setMessage("Qoralama saqlandi.");
       }
+      return id;
     } catch (requestError) {
       setError(errorMessage(requestError));
+      return null;
     } finally {
       setBusy(false);
     }
@@ -603,13 +744,34 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
       <section className="panel">
         <h3>2. Fontlar</h3>
         <p className="panel-hint">
-          1-shrift majburiy, 2–4 ixtiyoriy. .ttf, .otf va .woff qabul qilinadi — WOFF2 emas, chunki PDF eksporti uni
-          joylay olmaydi. PPTX’da maxsus shrift ochuvchining kompyuterida almashtirilishi mumkin.
+          Promptda shrift nomini yozing — agar u kutubxonada bo‘lsa, fayl yuklash shart emas, o‘zi biriktiriladi.
+          Fayl yuklash faqat kutubxonada yo‘q shrift uchun: .ttf, .otf va .woff — WOFF2 emas, chunki PDF eksporti
+          uni joylay olmaydi.
         </p>
+        {form.id && libraryReady.length ? (
+          <div className="jslayd-font-gate">
+            <p className="panel-hint">
+              Kutubxonada topildi: {libraryReady.map((entry) => entry.canonical_name).join(", ")}.
+            </p>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={attaching}
+              onClick={() => void attachFromLibrary()}
+            >
+              {attaching ? "Biriktirilmoqda…" : "Kutubxonadan biriktirish"}
+            </button>
+          </div>
+        ) : null}
         {FONT_SLOTS.map((slot, index) => (
           <FontSlot
             key={slot}
             slot={slot}
+            declared={outcome?.document?.fonts.find((font) => font.id === slot) ?? null}
+            inLibrary={(() => {
+              const named = outcome?.document?.fonts.find((font) => font.id === slot)?.name;
+              return named ? library.get(normalizeFamily(named)) ?? null : null;
+            })()}
             required={index === 0}
             disabled={!form.id || !form.slug}
             designId={form.id}
@@ -682,6 +844,24 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
               </li>
             ))}
           </ul>
+          {/**
+            * The findings themselves, not only the scores.
+            *
+            * A row reading "Sig‘imi ✓ 84" says something is imperfect and
+            * nothing about what — and the checks that matter most here name a
+            * specific element that can be widened two panels down. Sixteen is
+            * where a list stops being read.
+            */}
+          {outcome.health.findings.length ? (
+            <>
+              <DiagnosticList diagnostics={outcome.health.findings.slice(0, 16)} />
+              {outcome.health.findings.length > 16 ? (
+                <p className="panel-hint">
+                  Yana {outcome.health.findings.length - 16} ta xabar bor.
+                </p>
+              ) : null}
+            </>
+          ) : null}
         </section>
       ) : null}
 
@@ -724,6 +904,22 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
           ) : null}
         </section>
       ) : null}
+
+      {/**
+        * The visual editor writes back as source, through the same compiler the
+        * prompt goes through. One direction, one truth: there is no second copy
+        * of the design here that could drift from the text above.
+        */}
+      {outcome?.document ? (
+        <StudioSection
+          document={outcome.document}
+          designId={form.id}
+          family={family}
+          onChange={(_next, source) => { set("source", source); setSaved(false); }}
+          onFamily={setFamily}
+          onSaveDraft={() => save(false)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -737,9 +933,13 @@ function Workbench({ draft, onClose }: { draft: Draft; onClose: () => void }) {
  * what it looks like. So each slot lists what it has and takes up to ten.
  */
 function FontSlot({
-  slot, required, disabled, designId, slug, faces, onError, onSaved,
+  slot, declared, inLibrary, required, disabled, designId, slug, faces, onError, onSaved,
 }: {
   slot: string;
+  /** What the prompt says this slot is, before any file has been attached. */
+  declared: FontDeclaration | null;
+  /** The library's entry for the declared family, when it holds one. */
+  inLibrary: LibraryFamily | null;
   required: boolean;
   disabled: boolean;
   designId: string | null;
@@ -756,6 +956,26 @@ function FontSlot({
   const [italic, setItalic] = useState(false);
   const [fallback, setFallback] = useState<string>(first?.fallback ?? "Manrope");
   const [busy, setBusy] = useState(false);
+  const [typed, setTyped] = useState(false);
+
+  /**
+   * The prompt names its own fonts; this stops making somebody retype them.
+   *
+   * A slot is seeded from the file already attached to it when there is one,
+   * because that is what the design actually ships. Otherwise it follows the
+   * prompt's declaration — which for a new design is the only place the name,
+   * the roles and the fallback exist at all, and the boxes sat empty beside it.
+   *
+   * Typing stops the following, for the same reason as the form above.
+   */
+  useEffect(() => {
+    if (typed || first || !declared) return;
+    setName(declared.name);
+    setRoles(declared.roles.join(", "));
+    setFallback(declared.fallback);
+  }, [declared, first, typed]);
+
+  const write = (change: () => void) => { setTyped(true); change(); };
 
   const full = mine.length >= 10;
   const taken = mine.some((face) => face.weight === weight && face.italic === italic);
@@ -802,9 +1022,9 @@ function FontSlot({
       </div>
 
       <div className="jslayd-font-family">
-        <input placeholder="Nomi" value={name} onChange={(event) => setName(event.target.value)} />
-        <input placeholder="Rollar" value={roles} onChange={(event) => setRoles(event.target.value)} />
-        <select value={fallback} onChange={(event) => setFallback(event.target.value)}>
+        <input placeholder="Nomi" value={name} onChange={(event) => write(() => setName(event.target.value))} />
+        <input placeholder="Rollar" value={roles} onChange={(event) => write(() => setRoles(event.target.value))} />
+        <select value={fallback} onChange={(event) => write(() => setFallback(event.target.value))}>
           {FALLBACKS.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
       </div>
@@ -819,6 +1039,13 @@ function FontSlot({
             </li>
           ))}
         </ul>
+      ) : inLibrary ? (
+        // The upload box below is for a face nobody can download. Saying so
+        // here stops an admin hunting for a .ttf of Montserrat.
+        <p className="jslayd-font-empty ok">
+          Kutubxonada bor: {inLibrary.canonical_name} · {inLibrary.faces} face
+          {inLibrary.is_variable ? " · variable" : ""}. Fayl yuklash shart emas — saqlashda o‘zi biriktiriladi.
+        </p>
       ) : (
         <p className="jslayd-font-empty">Hali fayl yo‘q — zaxira shrift chiziladi.</p>
       )}

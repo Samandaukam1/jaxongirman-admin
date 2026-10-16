@@ -1,0 +1,186 @@
+import type { Archetype, JslaydDocument } from "@jaxongirman/jslayd";
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Lock, LockOpen, Trash2 } from "lucide-react";
+import { useState } from "react";
+
+import { duplicateElement, removeElement, renameElement, reorder, stackingOrder } from "@/lib/studioEdit";
+
+/**
+ * The stack, as a list somebody can rearrange.
+ *
+ * Reordering here is a list operation; turning that back into `zIndex` numbers
+ * is `reorder`'s problem, which is the point — a panel that edits the numbers
+ * directly makes the author do the arithmetic and discover collisions.
+ *
+ * Lock and hide are **not** written into the design. They are workbench state:
+ * a locked element is one this person does not want to grab by accident, which
+ * is nothing to do with what the slide is. Putting them in the DSL would extend
+ * a closed vocabulary for the convenience of one screen, and every renderer and
+ * exporter would then have to have an opinion about them.
+ */
+
+export type LayerFlags = { locked: Set<string>; hidden: Set<string> };
+
+export function StudioLayers({
+  document: design,
+  archetype,
+  selectedIds,
+  flags,
+  onSelect,
+  onChange,
+  onFlags,
+}: {
+  document: JslaydDocument;
+  archetype: Archetype | null;
+  selectedIds: readonly string[];
+  flags: LayerFlags;
+  /** Shift or ⌘ adds to the selection; a plain click replaces it. */
+  onSelect: (ids: readonly string[]) => void;
+  onChange: (next: JslaydDocument) => void;
+  onFlags: (next: LayerFlags) => void;
+}) {
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  /** The row being dragged, and the gap it is currently over. */
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [over, setOver] = useState<string | null>(null);
+
+  if (!archetype) return <p className="studio-empty">Slayd tanlanmagan.</p>;
+
+  // Top of the panel is the top of the stack, which is how a person reads it.
+  const ordered = stackingOrder(archetype).slice().reverse();
+
+  const move = (id: string, by: -1 | 1) => {
+    const ids = ordered.map((element) => element.id);
+    const at = ids.indexOf(id);
+    const to = at + by;
+    if (at < 0 || to < 0 || to >= ids.length) return;
+    const next = ids.slice();
+    next.splice(to, 0, ...next.splice(at, 1));
+    // The list is drawn top-first; `reorder` numbers from the bottom.
+    onChange(reorder(design, archetype.id, next.slice().reverse()));
+  };
+
+  /**
+   * Dropping one row onto another puts it in that row's place.
+   *
+   * The buttons stay. A four-element slide is faster to reorder with two
+   * presses than with a drag, and a drag is the only sane way to move something
+   * past nine layers — neither replaces the other, and the arithmetic is the
+   * same `reorder` in both cases.
+   */
+  const drop = (targetId: string) => {
+    const id = dragging;
+    setDragging(null);
+    setOver(null);
+    if (!id || id === targetId) return;
+
+    const ids = ordered.map((element) => element.id);
+    const from = ids.indexOf(id);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+
+    const next = ids.slice();
+    next.splice(to, 0, ...next.splice(from, 1));
+    // The list is drawn top-first; `reorder` numbers from the bottom.
+    onChange(reorder(design, archetype.id, next.slice().reverse()));
+  };
+
+  const toggle = (set: Set<string>, id: string): Set<string> => {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  };
+
+  const commitRename = (id: string) => {
+    const result = renameElement(design, archetype.id, id, draft);
+    if (result.error) { setError(result.error); return; }
+    onChange(result.document);
+    if (selectedIds.includes(id)) onSelect(selectedIds.map((entry) => (entry === id ? draft.trim() : entry)));
+    setRenaming(null);
+    setError(null);
+  };
+
+  return (
+    <div className="studio-layers">
+      {ordered.map((element, index) => {
+        const isSelected = selectedIds.includes(element.id);
+        const locked = flags.locked.has(element.id);
+        const hidden = flags.hidden.has(element.id);
+
+        return (
+          <div
+            key={element.id}
+            className={`studio-layer${isSelected ? " selected" : ""}`
+              + (dragging === element.id ? " dragging" : "")
+              + (over === element.id && dragging && dragging !== element.id ? " over" : "")}
+            draggable={renaming !== element.id}
+            onDragStart={(event) => {
+              setDragging(element.id);
+              event.dataTransfer.effectAllowed = "move";
+              // Firefox refuses to start a drag with no payload.
+              event.dataTransfer.setData("text/plain", element.id);
+            }}
+            onDragOver={(event) => { event.preventDefault(); setOver(element.id); }}
+            onDragLeave={() => setOver((current) => (current === element.id ? null : current))}
+            onDrop={(event) => { event.preventDefault(); drop(element.id); }}
+            onDragEnd={() => { setDragging(null); setOver(null); }}
+          >
+            <button
+              type="button"
+              className="studio-layer-name"
+              onClick={(event) => {
+                const adding = event.shiftKey || event.metaKey || event.ctrlKey;
+                if (!adding) { onSelect([element.id]); return; }
+                onSelect(selectedIds.includes(element.id)
+                  ? selectedIds.filter((entry) => entry !== element.id)
+                  : [...selectedIds, element.id]);
+              }}
+              onDoubleClick={() => { setRenaming(element.id); setDraft(element.id); setError(null); }}
+            >
+              {renaming === element.id ? (
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onClick={(event) => event.stopPropagation()}
+                  onBlur={() => commitRename(element.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") commitRename(element.id);
+                    if (event.key === "Escape") { setRenaming(null); setError(null); }
+                  }}
+                />
+              ) : (
+                <>
+                  <span className="studio-layer-type">{element.type}</span>
+                  <span className={hidden ? "studio-layer-dim" : undefined}>{element.id}</span>
+                </>
+              )}
+            </button>
+
+            <div className="studio-layer-actions">
+              <button type="button" title="Yuqoriga" disabled={index === 0} onClick={() => move(element.id, -1)}><ChevronUp size={14} /></button>
+              <button type="button" title="Pastga" disabled={index === ordered.length - 1} onClick={() => move(element.id, 1)}><ChevronDown size={14} /></button>
+              <button type="button" title={hidden ? "Ko‘rsatish" : "Yashirish"} onClick={() => onFlags({ ...flags, hidden: toggle(flags.hidden, element.id) })}>
+                {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+              <button type="button" title={locked ? "Qulfni ochish" : "Qulflash"} onClick={() => onFlags({ ...flags, locked: toggle(flags.locked, element.id) })}>
+                {locked ? <Lock size={14} /> : <LockOpen size={14} />}
+              </button>
+              <button type="button" title="Nusxalash" onClick={() => {
+                const result = duplicateElement(design, archetype.id, element.id);
+                onChange(result.document);
+                if (result.id) onSelect([result.id]);
+              }}><Copy size={14} /></button>
+              <button type="button" title="O‘chirish" onClick={() => {
+                onChange(removeElement(design, archetype.id, element.id));
+                onSelect(selectedIds.filter((entry) => entry !== element.id));
+              }}><Trash2 size={14} /></button>
+            </div>
+          </div>
+        );
+      })}
+      {error && <p className="studio-layer-error">{error}</p>}
+    </div>
+  );
+}

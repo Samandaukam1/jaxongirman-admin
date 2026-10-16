@@ -5,12 +5,14 @@ import {
   decompile,
   readDocument,
   renderAllPreviews,
+  renderArchetype,
   renderPreview,
   serializePretty,
   type Diagnostics,
   type HealthReport,
   type JslaydDocument,
   type RenderedSlide,
+  type SlideData,
   type Tier,
 } from "@jaxongirman/jslayd";
 import type { Database } from "@jaxongirman/types";
@@ -46,8 +48,30 @@ export async function compilePrompt(source: string): Promise<CompileOutcome> {
   return { document, diagnostics, health: analyze(document), hash: await contentHash(document) };
 }
 
-export function previewOf(document: JslaydDocument, family?: string | null): RenderedSlide {
-  return renderPreview(document, undefined, family);
+/**
+ * One slide, drawn.
+ *
+ * `archetypeId` is not optional in practice even though it reads that way: the
+ * studio's canvas passed a selected blueprint and got the cover back, because
+ * `renderPreview` falls to the cover when told nothing. The editor then drew
+ * the cover's elements under the selected blueprint's hit targets, which looks
+ * like the drag handles have come loose from the artwork.
+ *
+ * `slide` is the other half. Without it every design in the console is judged
+ * on placeholder text, which is the one kind of content a layout cannot fail
+ * on — always short, always the same length in every slot.
+ */
+export function previewOf(
+  document: JslaydDocument,
+  family?: string | null,
+  archetypeId?: string | null,
+  slide?: SlideData | null,
+): RenderedSlide {
+  if (!slide) return renderPreview(document, archetypeId ?? undefined, family);
+
+  const archetype = document.archetypes.find((entry) => entry.id === archetypeId) ?? document.archetypes[0];
+  if (!archetype) return renderPreview(document, undefined, family);
+  return renderArchetype(document, archetype, slide, family);
 }
 
 /**
@@ -62,6 +86,7 @@ export function toCanvas(rendered: RenderedSlide, key: string) {
     slide: { title: null, background: rendered.background as never },
     elements: rendered.elements.map((element, index) => ({
       ...element,
+      content: withPublicUrl(element.content as Record<string, unknown>),
       id: `${key}-${index}`,
       slide_id: key,
       presentation_id: key,
@@ -70,6 +95,28 @@ export function toCanvas(rendered: RenderedSlide, key: string) {
       updated_at: "",
     })) as never[],
   };
+}
+
+/**
+ * A design's own picture, as something a browser can load.
+ *
+ * The engine emits `{storageBucket, storagePath}` for artwork the design ships,
+ * because it has no opinion about how a reader reaches storage. The canvas
+ * reads `url`, so without this every image a design owns drew as an empty
+ * placeholder — and a design imported from PowerPoint is almost entirely images
+ * it owns, so the preview showed the layout with the artwork missing and
+ * nothing anywhere saying why.
+ *
+ * `design-assets` is a public bucket, so this is a URL rather than a signed
+ * request: no round trip, and nothing to expire while somebody is looking.
+ */
+function withPublicUrl(content: Record<string, unknown>): Record<string, unknown> {
+  const bucket = typeof content?.storageBucket === "string" ? content.storageBucket : null;
+  const path = typeof content?.storagePath === "string" ? content.storagePath : null;
+  if (!bucket || !path || content.url) return content;
+
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data?.publicUrl ? { ...content, url: data.publicUrl } : content;
 }
 
 export function allPreviewsOf(document: JslaydDocument, family?: string | null) {
@@ -582,4 +629,89 @@ export async function resolveDesignFonts(designId: string): Promise<FontResoluti
   const { data, error } = await supabase.functions.invoke("resolve-design-fonts", { body: { designId } });
   if (error) throw error;
   return ((data as { fonts?: FontResolution[] })?.fonts ?? []);
+}
+
+/* ------------------------------------------------------------ font library */
+
+export type LibraryFamily = {
+  id: string;
+  canonical_name: string;
+  normalized_name: string;
+  category: string;
+  is_variable: boolean;
+  faces: number;
+};
+
+/**
+ * The same normalisation the importer and the resolver use.
+ *
+ * A design's prompt says "Playfair Display" and the library stores
+ * `playfairdisplay`; matching on the display name would miss every family whose
+ * name has a space in it, which is most of them.
+ */
+export const normalizeFamily = (name: string): string =>
+  name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Which of these families the library already holds.
+ *
+ * Asked in one query rather than one per slot: a design declares up to four
+ * fonts and this runs on every recompile, so four round trips per keystroke is
+ * four too many.
+ */
+export async function findFamilies(names: readonly string[]): Promise<Map<string, LibraryFamily>> {
+  const wanted = [...new Set(names.map(normalizeFamily).filter(Boolean))];
+  if (!wanted.length) return new Map();
+
+  const { data, error } = await supabase
+    .from("font_families")
+    .select("id, canonical_name, normalized_name, category, is_variable, font_faces(count)")
+    .in("normalized_name", wanted);
+  if (error) throw error;
+
+  const found = new Map<string, LibraryFamily>();
+  for (const row of data ?? []) {
+    const counted = row.font_faces as unknown as { count: number }[] | null;
+    found.set(row.normalized_name, {
+      id: row.id,
+      canonical_name: row.canonical_name,
+      normalized_name: row.normalized_name,
+      category: row.category ?? "sans-serif",
+      is_variable: Boolean(row.is_variable),
+      faces: counted?.[0]?.count ?? 0,
+    });
+  }
+  return found;
+}
+
+/**
+ * Families whose name starts with what was typed, for the picker.
+ *
+ * A prefix rather than a substring: two thousand families make "an" match
+ * hundreds of them, and nobody scrolls to find Manrope inside that.
+ */
+export async function searchFamilies(prefix: string, limit = 20): Promise<LibraryFamily[]> {
+  const term = normalizeFamily(prefix);
+  if (!term) return [];
+
+  const { data, error } = await supabase
+    .from("font_families")
+    .select("id, canonical_name, normalized_name, category, is_variable, font_faces(count)")
+    .like("normalized_name", `${term}%`)
+    .eq("is_active", true)
+    .order("normalized_name")
+    .limit(limit);
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const counted = row.font_faces as unknown as { count: number }[] | null;
+    return {
+      id: row.id,
+      canonical_name: row.canonical_name,
+      normalized_name: row.normalized_name,
+      category: row.category ?? "sans-serif",
+      is_variable: Boolean(row.is_variable),
+      faces: counted?.[0]?.count ?? 0,
+    };
+  });
 }

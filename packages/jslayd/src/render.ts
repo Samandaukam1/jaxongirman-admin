@@ -30,7 +30,10 @@ import type {
   TextSource,
   TextStyle,
 } from "./document.ts";
-import { CHART_FALLBACKS, DESIGN_ASSET_BUCKET, MIN_FONT_SIZE, MIN_RENDER_FONT_SIZE, RENDER_SCALE } from "./spec.ts";
+import {
+  CANVAS_HEIGHT, CANVAS_WIDTH, CHART_FALLBACKS, DESIGN_ASSET_BUCKET,
+  MIN_FONT_SIZE, MIN_RENDER_FONT_SIZE, RENDER_SCALE,
+} from "./spec.ts";
 
 /**
  * The JSLAYD render engine.
@@ -50,6 +53,17 @@ import { CHART_FALLBACKS, DESIGN_ASSET_BUCKET, MIN_FONT_SIZE, MIN_RENDER_FONT_SI
  */
 
 export type RenderedElement = {
+  /**
+   * The authoring element this row came from.
+   *
+   * The renderer knows it and used to throw it away, which meant nothing could
+   * ask "which element in the design drew this box" — so a studio canvas could
+   * either show the real output or be editable, not both. One element may emit
+   * several rows (a stat is a value and a label; an image may carry an overlay)
+   * and they all carry the same origin, which is what makes clicking any part
+   * of a stat select the stat.
+   */
+  origin?: string;
   type: "text" | "image" | "shape" | "icon" | "chart" | "table" | "line" | "group";
   x: number;
   y: number;
@@ -196,6 +210,7 @@ function emit(
   for (const element of kept) {
     const geometry = element.grow ? absorb(element.geometry, dropped) : element.geometry;
     const box = place(geometry, offsetX, offsetY);
+    const before = out.length;
 
     switch (element.type) {
       case "group":
@@ -236,6 +251,13 @@ function emit(
         if (table) out.push(table);
         break;
       }
+    }
+
+    // Stamped here rather than threaded through a dozen renderers. A group's
+    // children have already claimed their own origin by the time it returns,
+    // so only rows that are still unclaimed take the element's id.
+    for (let at = before; at < out.length; at += 1) {
+      if (!out[at]!.origin) out[at]!.origin = element.id;
     }
   }
 }
@@ -471,7 +493,10 @@ function fit(text: string, style: TextStyle, box: Box): { fontSize: number; maxL
     const perLine = Math.max(1, Math.floor(box.width / (size * GLYPH_RATIO)));
     return explicit.reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
   };
-  const roomAt = (size: number) => Math.max(1, Math.floor(box.height / (size * style.lineHeight)));
+  // The same floor the emitted style uses: planning against 0.92 while drawing
+  // at 1.05 fits one more line than the box can show.
+  const roomAt = (size: number) =>
+    Math.max(1, Math.floor(box.height / (size * Math.max(MIN_LINE_HEIGHT, style.lineHeight))));
 
   /**
    * The line budget the design was drawn for: what the box holds at the size
@@ -501,6 +526,9 @@ function fit(text: string, style: TextStyle, box: Box): { fontSize: number; maxL
   return { fontSize: MIN_RENDER_FONT_SIZE, maxLines: roomAt(MIN_RENDER_FONT_SIZE) };
 }
 
+/** Below this a line box is shorter than its glyphs, and renderers disagree. */
+const MIN_LINE_HEIGHT = 1.05;
+
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
@@ -510,7 +538,21 @@ function textStyleOf(style: TextStyle, fontSize: number, context: RenderContext)
   return {
     color,
     fontSize,
-    lineHeight: round2(fontSize * style.lineHeight),
+    /**
+     * A line box is never shorter than the glyphs it holds.
+     *
+     * Designs write tight leading — this one asks for 0.92 on its cover title —
+     * and in CSS that is a legitimate choice: the lines overlap slightly and
+     * every letter still draws. React Native does not overlap them, it clips,
+     * so the top of the first line is cut off and a customer sees a title with
+     * its head sliced. A PowerPoint writer does a third thing.
+     *
+     * A ratio no renderer can honour the same way is not a design decision this
+     * engine can pass through. The floor keeps the leading tight — 1.05 is
+     * still tighter than the 1.2 most type sets at — and it is the same in
+     * every renderer, which is what the engine exists to guarantee.
+     */
+    lineHeight: round2(fontSize * Math.max(MIN_LINE_HEIGHT, style.lineHeight)),
     letterSpacing: scale(style.letterSpacing),
     textAlign: style.align,
     verticalAlign: style.verticalAlign === "middle" ? "center" : style.verticalAlign,
@@ -713,7 +755,30 @@ function renderImage(element: ImageElement, box: Box, geometry: Geometry, contex
   const owned = element.source && "asset" in element.source
     ? { bucket: DESIGN_ASSET_BUCKET, path: `${context.slug}/${element.source.asset}` }
     : null;
-  const picture = owned ?? context.slide.images[element.slot] ?? null;
+
+  /**
+   * A picture the deck found beats the one the template shipped — if it is big
+   * enough to be the page's picture rather than its furniture.
+   *
+   * A template's photography is a stock cover chosen for somebody else's
+   * subject, and the whole point of finding one is to put it there. But the
+   * same element type carries logos, badges and ornaments, and a photograph of
+   * the topic where the company mark was is worse than the stock cover.
+   *
+   * A tenth of the canvas is the line. Below it nothing is the content of a
+   * page; above it nothing is a logo.
+   */
+  const supplied = context.slide.images[element.slot] ?? null;
+  /**
+   * Measured in authoring units, which is what the canvas constants are in.
+   *
+   * `box` is the render box — already scaled down to the model the apps draw —
+   * so comparing it against a 1920×1080 canvas made the threshold nearly four
+   * times what it reads as. A picture filling a third of the page counted as
+   * furniture, and every template kept its own artwork.
+   */
+  const roomy = (geometry.width * geometry.height) >= (CANVAS_WIDTH * CANVAS_HEIGHT) / 10;
+  const picture = (supplied && (roomy || !owned)) ? supplied : owned ?? supplied ?? null;
   // A slot with no picture still draws when the design says the image is
   // required: the renderer shows a placeholder, which is a composition with a
   // hole in it rather than a composition that silently lost a quarter of itself.

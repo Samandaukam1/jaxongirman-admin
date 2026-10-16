@@ -91,17 +91,15 @@ muted: #6B6B6B
 colors: #FF6A00, #111111, #FFD166, #6C63FF
 
 [FONTS]
+# Google Fonts oilalari. Fayl yozilmagan — kutubxonadan o'zi biriktiriladi.
 font_1:
-  name: Apelsen Display
+  name: Space Grotesk
   role: display, heading
-  face: apelsen-display.ttf 400
-  face: apelsen-display-700.ttf 700
   fallback: League Spartan
-  weight: 800
+  weight: 700
 font_2:
-  name: Apelsen Text
+  name: Manrope
   role: body, caption, subheading
-  face: apelsen-text.ttf 400
   fallback: Manrope
   weight: 400
 
@@ -427,7 +425,7 @@ Ma'lumot palitradan ko'p bo'lsa, ranglar deterministik ravishda kengaytiriladi
 Har bir shrift \`font_1:\` … \`font_4:\` marker bilan boshlanadi. \`font_1\` majburiy.
 Xossalar markerdan keyin yoki chekintirilgan holda yozilishi mumkin.
 
-name      ixtiyoriy  ko'rinadigan nom
+name      MAJBURIY   Google Fonts oilasining aynan nomi (pastga qarang)
 role      majburiy   ${list(FONT_ROLES)}  (vergul bilan bir nechta)
 face      ixtiyoriy  bitta fayl: \`face: <fayl> <qalinlik> [italic]\`
                      takrorlanadi — bitta paketga 10 tagacha fayl kiradi,
@@ -439,6 +437,42 @@ weight    ixtiyoriy  100–900
 italic    ixtiyoriy  true / false
 fallback  ixtiyoriy  ilova bilan keladigan shrift: Manrope, League Spartan,
                      Arimo, Pinyon Script, Inter, Caveat Brush
+
+FAQAT GOOGLE FONTS
+------------------
+\`name\` — Google Fonts oilasining aynan nomi bo'lishi shart: "Montserrat",
+"Playfair Display", "Space Grotesk". Kutubxonada 2000 dan ortiq oila bor va
+nom to'g'ri yozilgan bo'lsa, shrift dizaynga o'zi biriktiriladi — hech kim
+fayl yuklamaydi.
+
+O'ylab topilgan nom yozmang. "Apelsen Display" degan oila yo'q, shuning uchun
+u hech qachon topilmaydi va dizayn zaxira shrift bilan chiziladi — ya'ni siz
+tanlagan tipografika umuman ko'rinmaydi. Xato jimgina bo'ladi: dizayn ishlaydi,
+faqat boshqa shriftda.
+
+Google Fonts'da yo'q shriftni ko'zlagan bo'lsangiz, eng yaqin muqobilini oling:
+
+  Helvetica, Helvetica Neue, Arial, SF Pro  →  Inter, Manrope, Archivo
+  Segoe UI                                  →  Open Sans
+  Calibri                                   →  Carlito       (o'lchamlari bir xil)
+  Cambria                                   →  Caladea       (o'lchamlari bir xil)
+  Times New Roman                           →  Tinos         (o'lchamlari bir xil)
+  Futura                                    →  Jost, Poppins
+  Avenir                                    →  Nunito Sans
+  Gotham, Proxima Nova                      →  Montserrat
+  Frutiger                                  →  Source Sans 3
+  Garamond                                  →  EB Garamond
+  Didot, Bodoni                             →  Playfair Display, Bodoni Moda
+  Courier, monospace                        →  Roboto Mono, JetBrains Mono
+  Siqilgan sans                             →  Archivo Narrow, Oswald
+
+\`face:\` qatorini faqat kutubxonada yo'q shrift uchun yozing. Google oilasi
+uchun \`face:\` yozish shart emas — fayllar kutubxonadan keladi.
+
+\`fallback\` boshqa narsa: u ilova bilan birga keladigan oltita shriftdan biri
+bo'lishi kerak (Manrope, League Spartan, Arimo, Pinyon Script, Inter,
+Caveat Brush), chunki fayllar yuklanguncha shu chiziladi. Google oilasining
+nomini u yerga yozmang.
 
 Eslatma: WOFF2 qo'llab-quvvatlanmaydi — PDF eksporti uni joylay olmaydi.
 PPTX eksportida maxsus shrift ochuvchining kompyuterida almashtirilishi mumkin;
@@ -473,7 +507,7 @@ esa "o'zing o'lchab ol" degani — bu ikkisi bir xil emas.
 9. [SLIDE <id>]
 ---------------
 id                 kichik harf, raqam, pastki chiziq: text_image_02
-purpose            ${list(ARCHETYPE_PURPOSES)}
+purpose            quyidagi 25 turdan biri (to'liq ro'yxat pastda)
 background         rang roli yoki aniq rang
 backgroundGradient gradient (12-bo'lim)
 minText / maxText  belgilar soni oralig'i
@@ -483,6 +517,59 @@ supportsImage / supportsChart / supportsTable / supportsStats / supportsQuote
 
 Bir purpose uchun bir nechta arxetip bo'lishi mumkin (text_image_01,
 text_image_02, …). Generator taqdimot davomida ularni almashtirib turadi.
+
+9.1. SLAYD TASNIFI — har bir slayd shu 25 turdan biriga tegishli
+----------------------------------------------------------------
+Slayd yaratayotganda avval uning turini aniqlang, keyin elementlarni joylang.
+Tur — sahifaning vazifasi, ko'rinishi emas: ikki ustunga bo'lingan sahifa
+\`comparison\` ham, \`about\` ham bo'lishi mumkin — qaysi biri ekanini sahifa
+nima uchun borligi hal qiladi.
+
+OCHILISH
+ 1. cover          Asosiy muqova: sarlavha, kichik sarlavha, katta vizual
+ 2. minimal_cover  Sokin muqova: faqat sarlavha va nom, deyarli bo'sh
+ 3. section        Bo'lim ajratgichi: yangi bo'lim boshlanishini bildiradi
+ 4. agenda         Reja / mundarija: ro'yxat ko'rinishida
+ 5. introduction   Kirish: mavzuni tanishtiruvchi matn
+ 6. about          Biz haqimizda: tashkilot yoki muallif haqida
+
+ASOSIY QISM
+ 7. title_content  Sarlavha va matn — eng ko'p ishlatiladigan sahifa
+ 8. text_image     Chapda matn, o'ngda katta rasm
+ 9. image_text     Chapda rasm, o'ngda matn
+10. full_image     Butun ekran rasm, ustida qisqa matn
+11. features       3–4 ta xizmat yoki xususiyat, yonma-yon kartalarda
+
+DALIL VA RAQAM
+12. statistics     Bitta katta raqam va uning izohi
+13. kpi_cards      Bir necha ko'rsatkich, har biri alohida kartada
+14. dashboard      Bir sahifada bir necha vizual: diagramma, raqam, jadval
+15. chart          Diagramma: ustunli, chiziqli, doiraviy
+16. comparison     Ikki narsani yonma-yon solishtirish
+17. timeline       Vaqt o'qi: sanalar bo'yicha ketma-ketlik
+18. process        Bosqichlar: 1 → 2 → 3
+19. infographic    Chizma bilan tushuntirish
+
+ODAM VA ISH
+20. team           Jamoa: rasm va ism-familiya
+21. gallery        Portfolio yoki rasmlar to'plami
+22. table          Jadval, tuzilgan ma'lumot
+23. quote          Iqtibos yoki kuchli bir jumla
+
+YAKUN
+24. conclusion     Xulosa, asosiy fikrlar
+25. thank_you      Rahmat / yakuniy sahifa
+
+Bularning hech biriga to'g'ri kelmasa: \`custom\`.
+Eski dizaynlarda \`two_column\`, \`three_column\` va \`references\` ham uchraydi —
+yangi dizaynda ular o'rniga mos turdan foydalaning (\`features\`, \`comparison\`).
+
+Dizaynda bir tur bo'lmasa, generator eng yaqinini chizadi: \`team\` bo'lmasa
+\`gallery\`, \`dashboard\` bo'lmasa \`chart\`. Shuning uchun kamida \`cover\`,
+\`title_content\`, \`section\` va \`conclusion\` bo'lishi kerak — qolganlari
+shulardan tarqaladi.
+
+To'liq ro'yxat: ${list(ARCHETYPE_PURPOSES)}
 
 10. [ELEMENT <id>] — umumiy xossalar
 ------------------------------------
