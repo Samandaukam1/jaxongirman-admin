@@ -8,19 +8,27 @@ import { AuditPage } from "@/pages/AuditPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { FinancePage } from "@/pages/FinancePage";
 import { GamesPage } from "@/pages/GamesPage";
+import { FontsPage } from "@/pages/FontsPage";
 import { GiftsPage } from "@/pages/GiftsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { JElementFamilyPage } from "@/pages/JElementFamilyPage";
+import { DesignEnginePage } from "@/pages/DesignEnginePage";
+import { ImageResolverPage } from "@/pages/ImageResolverPage";
 import { JElementsPage } from "@/pages/JElementsPage";
 import { JslaydDesignsPage } from "@/pages/JslaydDesignsPage";
+import { LanguagesPage } from "@/pages/LanguagesPage";
 import { PptxTemplatesPage } from "@/pages/PptxTemplatesPage";
 import { PresentationsPage } from "@/pages/PresentationsPage";
 import { MarketplaceFinancePage } from "@/pages/MarketplaceFinancePage";
 import { MarketplacePage } from "@/pages/MarketplacePage";
 import { ModulesPage } from "@/pages/ModulesPage";
 import { OrdersPage } from "@/pages/OrdersPage";
+import { MarathonPage } from "@/pages/MarathonPage";
 import { PricingPage } from "@/pages/PricingPage";
+import { EconomyPage } from "@/pages/EconomyPage";
+import { SupportPage } from "@/pages/SupportPage";
 import { QrVideoPage } from "@/pages/QrVideoPage";
+import { SiteIconsPage } from "@/pages/SiteIconsPage";
 import { TariffsPage } from "@/pages/TariffsPage";
 import { SurveysPage } from "@/pages/SurveysPage";
 import { UsagePage } from "@/pages/UsagePage";
@@ -35,11 +43,18 @@ const pages: Record<string, ReactNode> = {
   "/jslayd": <JslaydDesignsPage />,
   "/pptx": <PptxTemplatesPage />,
   "/jelements": <JElementsPage />,
+  "/rasmlar": <ImageResolverPage />,
+  "/dizayn-engine": <DesignEnginePage />,
   "/qr-video": <QrVideoPage />,
+  "/sayt-ikonkalari": <SiteIconsPage />,
   "/tariflar": <TariffsPage />,
+  "/iqtisod": <EconomyPage />,
+  "/tillar": <LanguagesPage />,
+  "/support": <SupportPage />,
   "/usage": <UsagePage />,
   "/pricing": <PricingPage />,
   "/audit": <AuditPage />,
+  "/fonts": <FontsPage />,
   "/gifts": <GiftsPage />,
   "/finance": <FinancePage />,
   "/modules": <ModulesPage />,
@@ -47,23 +62,28 @@ const pages: Record<string, ReactNode> = {
   "/marketplace": <MarketplacePage />,
   "/marketplace-finance": <MarketplaceFinancePage />,
   "/games": <GamesPage />,
+  "/marafon": <MarathonPage />,
   "/orders": <OrdersPage />,
   "/app-store": <AppStorePage />,
 };
 
 export default function App() {
-  const { session, loading, isAdmin, accessChecked } = useAuth();
+  const { session, loading, isAdmin, isSupport, accessChecked } = useAuth();
+  // The support desk's own staff open the console for one page only.
+  const supportOnly = isSupport && !isAdmin;
   const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !session && pathname !== "/login") navigate("/login", true);
+    else if (session && accessChecked && supportOnly && pathname !== "/support") navigate("/support", true);
     else if (session && accessChecked && isAdmin
       && (pathname === "/login" || (!pages[pathname] && !/^\/jelements\/[0-9a-f-]{36}$/.test(pathname)))) navigate("/", true);
-  }, [accessChecked, isAdmin, loading, pathname, session]);
+  }, [accessChecked, isAdmin, loading, pathname, session, supportOnly]);
 
   if (loading || (session && !accessChecked)) return <LoadingScreen />;
   if (!session) return <LoginPage />;
-  if (!isAdmin) return <AccessDeniedPage />;
+  if (!isAdmin && !isSupport) return <AccessDeniedPage />;
+  if (supportOnly) return <AdminLayout pathname="/support"><SupportPage /></AdminLayout>;
 
   // One parameterised route. The rest of this console is a flat table of
   // paths, and adding a router for a single detail page would be a dependency
