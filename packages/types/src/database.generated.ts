@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
   public: {
     Tables: {
       academic_sections: {
@@ -283,6 +278,72 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_lots: {
+        Row: {
+          burned: number
+          closed_at: string | null
+          created_at: string
+          expires_at: string
+          granted: number
+          id: string
+          order_id: string | null
+          plan_code: string
+          remaining: number
+          rolled_in: number
+          starts_at: string
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          burned?: number
+          closed_at?: string | null
+          created_at?: string
+          expires_at: string
+          granted: number
+          id?: string
+          order_id?: string | null
+          plan_code: string
+          remaining: number
+          rolled_in?: number
+          starts_at?: string
+          status?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          burned?: number
+          closed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          granted?: number
+          id?: string
+          order_id?: string | null
+          plan_code?: string
+          remaining?: number
+          rolled_in?: number
+          starts_at?: string
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_lots_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_lots_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_packages: {
         Row: {
           bonus_coins: number
@@ -291,11 +352,17 @@ export type Database = {
           created_at: string
           currency: string
           description: string
+          description_i18n: Json
+          ends_at: string | null
           id: string
           is_active: boolean
           label: string
+          label_i18n: Json
+          presentation_pages: number
           price_amount: number
+          purchase_limit: number | null
           sort_order: number
+          starts_at: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -306,11 +373,17 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string
+          description_i18n?: Json
+          ends_at?: string | null
           id?: string
           is_active?: boolean
           label: string
+          label_i18n?: Json
+          presentation_pages?: number
           price_amount: number
+          purchase_limit?: number | null
           sort_order?: number
+          starts_at?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -321,11 +394,17 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string
+          description_i18n?: Json
+          ends_at?: string | null
           id?: string
           is_active?: boolean
           label?: string
+          label_i18n?: Json
+          presentation_pages?: number
           price_amount?: number
+          purchase_limit?: number | null
           sort_order?: number
+          starts_at?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -708,6 +787,51 @@ export type Database = {
         }
         Relationships: []
       }
+      economy_versions: {
+        Row: {
+          coin_value_uzs: number
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          id: number
+          max_charge: number
+          min_charge: number
+          no_plan_multiplier: number
+          note: string
+          rounding: string
+          version: number
+          welcome: Json
+        }
+        Insert: {
+          coin_value_uzs: number
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          id?: number
+          max_charge?: number
+          min_charge?: number
+          no_plan_multiplier: number
+          note?: string
+          rounding?: string
+          version: number
+          welcome?: Json
+        }
+        Update: {
+          coin_value_uzs?: number
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          id?: number
+          max_charge?: number
+          min_charge?: number
+          no_plan_multiplier?: number
+          note?: string
+          rounding?: string
+          version?: number
+          welcome?: Json
+        }
+        Relationships: []
+      }
       export_jobs: {
         Row: {
           completed_at: string | null
@@ -819,6 +943,7 @@ export type Database = {
           id: string
           italic: boolean
           storage_path: string
+          style_name: string
           weight: number
         }
         Insert: {
@@ -830,6 +955,7 @@ export type Database = {
           id?: string
           italic?: boolean
           storage_path: string
+          style_name?: string
           weight?: number
         }
         Update: {
@@ -841,6 +967,7 @@ export type Database = {
           id?: string
           italic?: boolean
           storage_path?: string
+          style_name?: string
           weight?: number
         }
         Relationships: [
@@ -856,27 +983,42 @@ export type Database = {
       font_families: {
         Row: {
           canonical_name: string
+          category: string
           created_at: string
           id: string
+          is_active: boolean
+          is_featured: boolean
+          is_variable: boolean
           license_metadata: Json
           normalized_name: string
           source: string
+          updated_at: string
         }
         Insert: {
           canonical_name: string
+          category?: string
           created_at?: string
           id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          is_variable?: boolean
           license_metadata?: Json
           normalized_name: string
           source?: string
+          updated_at?: string
         }
         Update: {
           canonical_name?: string
+          category?: string
           created_at?: string
           id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          is_variable?: boolean
           license_metadata?: Json
           normalized_name?: string
           source?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1331,6 +1473,7 @@ export type Database = {
           idempotency_key: string
           owner_id: string
           presentation_id: string
+          pricing: Json | null
           progress: number
           provider: string | null
           provider_job_id: string | null
@@ -1353,6 +1496,7 @@ export type Database = {
           idempotency_key: string
           owner_id: string
           presentation_id: string
+          pricing?: Json | null
           progress?: number
           provider?: string | null
           provider_job_id?: string | null
@@ -1375,6 +1519,7 @@ export type Database = {
           idempotency_key?: string
           owner_id?: string
           presentation_id?: string
+          pricing?: Json | null
           progress?: number
           provider?: string | null
           provider_job_id?: string | null
@@ -1399,6 +1544,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           details: Json
+          duration_ms: number | null
+          error_code: string | null
           id: string
           job_id: string
           key: string
@@ -1416,6 +1563,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           details?: Json
+          duration_ms?: number | null
+          error_code?: string | null
           id?: string
           job_id: string
           key: string
@@ -1433,6 +1582,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           details?: Json
+          duration_ms?: number | null
+          error_code?: string | null
           id?: string
           job_id?: string
           key?: string
@@ -1742,6 +1893,389 @@ export type Database = {
           },
         ]
       }
+      marathon_campaigns: {
+        Row: {
+          contract_cap: number
+          created_at: string
+          created_by: string | null
+          description: string
+          ends_at: string
+          id: string
+          min_free_price: number
+          min_premium_price: number
+          poster_path: string | null
+          rules: string
+          starts_at: string
+          status: Database["public"]["Enums"]["marathon_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          contract_cap?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          ends_at: string
+          id?: string
+          min_free_price?: number
+          min_premium_price?: number
+          poster_path?: string | null
+          rules?: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["marathon_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          contract_cap?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          ends_at?: string
+          id?: string
+          min_free_price?: number
+          min_premium_price?: number
+          poster_path?: string | null
+          rules?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["marathon_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marathon_milestone_decisions: {
+        Row: {
+          campaign_id: string
+          decided_at: string
+          decision: string
+          id: string
+          premium_votes_at: number
+          tier_position: number
+          total_votes_at: number
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          decided_at?: string
+          decision: string
+          id?: string
+          premium_votes_at: number
+          tier_position: number
+          total_votes_at: number
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          decided_at?: string
+          decision?: string
+          id?: string
+          premium_votes_at?: number
+          tier_position?: number
+          total_votes_at?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marathon_milestone_decisions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marathon_participants: {
+        Row: {
+          campaign_id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marathon_participants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marathon_reward_tiers: {
+        Row: {
+          campaign_id: string
+          position: number
+          premium_required: number
+          reward_percent: number
+          votes_required: number
+        }
+        Insert: {
+          campaign_id: string
+          position: number
+          premium_required: number
+          reward_percent: number
+          votes_required: number
+        }
+        Update: {
+          campaign_id?: string
+          position?: number
+          premium_required?: number
+          reward_percent?: number
+          votes_required?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marathon_reward_tiers_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marathon_vote_ledger: {
+        Row: {
+          campaign_id: string
+          candidate_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          source: Database["public"]["Enums"]["marathon_vote_source"]
+          voter_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          candidate_id: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          source?: Database["public"]["Enums"]["marathon_vote_source"]
+          voter_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["marathon_vote_kind"]
+          source?: Database["public"]["Enums"]["marathon_vote_source"]
+          voter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marathon_vote_ledger_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marathon_vote_listings: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          quantity: number
+          remaining: number
+          seller_id: string
+          status: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          quantity: number
+          remaining: number
+          seller_id: string
+          status?: string
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["marathon_vote_kind"]
+          quantity?: number
+          remaining?: number
+          seller_id?: string
+          status?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marathon_vote_listings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marathon_vote_sales: {
+        Row: {
+          buyer_fee: number
+          buyer_fee_rate: number
+          buyer_id: string
+          buyer_total: number
+          campaign_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          listing_id: string
+          order_id: string
+          platform_revenue: number
+          quantity: number
+          refunded_at: string | null
+          released_at: string | null
+          seller_fee: number
+          seller_fee_rate: number
+          seller_id: string
+          seller_net: number
+          settled_at: string | null
+          settled_by: string | null
+          status: string
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          buyer_fee: number
+          buyer_fee_rate: number
+          buyer_id: string
+          buyer_total: number
+          campaign_id: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          listing_id: string
+          order_id: string
+          platform_revenue: number
+          quantity: number
+          refunded_at?: string | null
+          released_at?: string | null
+          seller_fee: number
+          seller_fee_rate: number
+          seller_id: string
+          seller_net: number
+          settled_at?: string | null
+          settled_by?: string | null
+          status?: string
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          buyer_fee?: number
+          buyer_fee_rate?: number
+          buyer_id?: string
+          buyer_total?: number
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["marathon_vote_kind"]
+          listing_id?: string
+          order_id?: string
+          platform_revenue?: number
+          quantity?: number
+          refunded_at?: string | null
+          released_at?: string | null
+          seller_fee?: number
+          seller_fee_rate?: number
+          seller_id?: string
+          seller_net?: number
+          settled_at?: string | null
+          settled_by?: string | null
+          status?: string
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marathon_vote_sales_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marathon_vote_sales_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marathon_vote_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marathon_vote_sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_auto_approval_events: {
+        Row: {
+          created_at: string
+          decision: string
+          id: number
+          presentation_id: string | null
+          product_id: string | null
+          reasons: Json
+          revision: Json | null
+          seller_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          id?: number
+          presentation_id?: string | null
+          product_id?: string | null
+          reasons?: Json
+          revision?: Json | null
+          seller_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: number
+          presentation_id?: string | null
+          product_id?: string | null
+          reasons?: Json
+          revision?: Json | null
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_auto_approval_events_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_auto_approval_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_categories: {
         Row: {
           code: string
@@ -1872,8 +2406,10 @@ export type Database = {
           code: string
           created_at: string
           description: string
+          description_i18n: Json
           is_active: boolean
           label: string
+          label_i18n: Json
           max_file_bytes: number
           sort_order: number
           supports_editor_import: boolean
@@ -1885,8 +2421,10 @@ export type Database = {
           code: string
           created_at?: string
           description?: string
+          description_i18n?: Json
           is_active?: boolean
           label: string
+          label_i18n?: Json
           max_file_bytes?: number
           sort_order?: number
           supports_editor_import?: boolean
@@ -1898,8 +2436,10 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string
+          description_i18n?: Json
           is_active?: boolean
           label?: string
+          label_i18n?: Json
           max_file_bytes?: number
           sort_order?: number
           supports_editor_import?: boolean
@@ -1984,6 +2524,7 @@ export type Database = {
       }
       marketplace_products: {
         Row: {
+          approval_source: string | null
           base_price: number
           category_id: string | null
           content_units: number | null
@@ -1998,18 +2539,23 @@ export type Database = {
           material_type: string
           moderated_at: string | null
           moderated_by: string | null
+          moderation_note: string | null
           published_at: string | null
           rating_count: number
           rating_sum: number
           rejection_reason: string | null
+          revision_snapshot: Json | null
           sales_count: number
           search_text: unknown
           seller_id: string
+          source_presentation_id: string | null
           status: Database["public"]["Enums"]["marketplace_product_status"]
+          suspended_at: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          approval_source?: string | null
           base_price: number
           category_id?: string | null
           content_units?: number | null
@@ -2024,18 +2570,23 @@ export type Database = {
           material_type: string
           moderated_at?: string | null
           moderated_by?: string | null
+          moderation_note?: string | null
           published_at?: string | null
           rating_count?: number
           rating_sum?: number
           rejection_reason?: string | null
+          revision_snapshot?: Json | null
           sales_count?: number
           search_text?: unknown
           seller_id: string
+          source_presentation_id?: string | null
           status?: Database["public"]["Enums"]["marketplace_product_status"]
+          suspended_at?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          approval_source?: string | null
           base_price?: number
           category_id?: string | null
           content_units?: number | null
@@ -2050,14 +2601,18 @@ export type Database = {
           material_type?: string
           moderated_at?: string | null
           moderated_by?: string | null
+          moderation_note?: string | null
           published_at?: string | null
           rating_count?: number
           rating_sum?: number
           rejection_reason?: string | null
+          revision_snapshot?: Json | null
           sales_count?: number
           search_text?: unknown
           seller_id?: string
+          source_presentation_id?: string | null
           status?: Database["public"]["Enums"]["marketplace_product_status"]
+          suspended_at?: string | null
           title?: string
           updated_at?: string
         }
@@ -2082,6 +2637,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "marketplace_material_types"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "marketplace_products_source_presentation_id_fkey"
+            columns: ["source_presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2912,6 +3474,110 @@ export type Database = {
           },
         ]
       }
+      presentation_credit_grants: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_by: string | null
+          id: string
+          note: string
+          order_id: string | null
+          pages_granted: number
+          pages_remaining: number
+          pages_reserved: number
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          note?: string
+          order_id?: string | null
+          pages_granted: number
+          pages_remaining: number
+          pages_reserved?: number
+          source: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          note?: string
+          order_id?: string | null
+          pages_granted?: number
+          pages_remaining?: number
+          pages_reserved?: number
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_credit_grants_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_credit_ledger: {
+        Row: {
+          created_at: string
+          grant_id: string
+          id: number
+          idempotency_key: string
+          job_id: string | null
+          kind: string
+          metadata: Json
+          pages: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grant_id: string
+          id?: number
+          idempotency_key: string
+          job_id?: string | null
+          kind: string
+          metadata?: Json
+          pages: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grant_id?: string
+          id?: number
+          idempotency_key?: string
+          job_id?: string | null
+          kind?: string
+          metadata?: Json
+          pages?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_credit_ledger_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_credit_grants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presentation_credit_ledger_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "generation_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentation_defenses: {
         Row: {
           conclusion: string
@@ -3233,6 +3899,88 @@ export type Database = {
           },
         ]
       }
+      presentation_revision_audit: {
+        Row: {
+          actor_id: string | null
+          actor_kind: string
+          created_at: string
+          id: number
+          minute_bucket: string
+          presentation_id: string
+          source: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_kind: string
+          created_at?: string
+          id?: number
+          minute_bucket: string
+          presentation_id: string
+          source: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_kind?: string
+          created_at?: string
+          id?: number
+          minute_bucket?: string
+          presentation_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_revision_audit_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_revision_state: {
+        Row: {
+          admin_edits: number
+          imported: boolean
+          last_admin_edit_at: string | null
+          last_user_edit_at: string | null
+          presentation_id: string
+          system_edits: number
+          tracked_since: string
+          updated_at: string
+          user_edits: number
+        }
+        Insert: {
+          admin_edits?: number
+          imported?: boolean
+          last_admin_edit_at?: string | null
+          last_user_edit_at?: string | null
+          presentation_id: string
+          system_edits?: number
+          tracked_since?: string
+          updated_at?: string
+          user_edits?: number
+        }
+        Update: {
+          admin_edits?: number
+          imported?: boolean
+          last_admin_edit_at?: string | null
+          last_user_edit_at?: string | null
+          presentation_id?: string
+          system_edits?: number
+          tracked_since?: string
+          updated_at?: string
+          user_edits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_revision_state_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: true
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentation_sessions: {
         Row: {
           created_at: string
@@ -3354,16 +4102,21 @@ export type Database = {
           author_name: string | null
           created_at: string
           current_version: number
+          design_dna: Json | null
+          design_engine: string | null
           design_id: string | null
+          design_request: Json | null
           design_version: number | null
           error_message: string | null
           estimated_credits: number
           generated_slide_count: number
           generation_cost_usd: number
           id: string
+          language: string
           owner_id: string
           palette_code: string | null
           requested_slide_count: number
+          requirements: string | null
           reserved_credits: number
           status: Database["public"]["Enums"]["presentation_status"]
           style: Database["public"]["Enums"]["presentation_style"]
@@ -3380,16 +4133,21 @@ export type Database = {
           author_name?: string | null
           created_at?: string
           current_version?: number
+          design_dna?: Json | null
+          design_engine?: string | null
           design_id?: string | null
+          design_request?: Json | null
           design_version?: number | null
           error_message?: string | null
           estimated_credits?: number
           generated_slide_count?: number
           generation_cost_usd?: number
           id?: string
+          language?: string
           owner_id: string
           palette_code?: string | null
           requested_slide_count: number
+          requirements?: string | null
           reserved_credits?: number
           status?: Database["public"]["Enums"]["presentation_status"]
           style: Database["public"]["Enums"]["presentation_style"]
@@ -3406,16 +4164,21 @@ export type Database = {
           author_name?: string | null
           created_at?: string
           current_version?: number
+          design_dna?: Json | null
+          design_engine?: string | null
           design_id?: string | null
+          design_request?: Json | null
           design_version?: number | null
           error_message?: string | null
           estimated_credits?: number
           generated_slide_count?: number
           generation_cost_usd?: number
           id?: string
+          language?: string
           owner_id?: string
           palette_code?: string | null
           requested_slide_count?: number
+          requirements?: string | null
           reserved_credits?: number
           status?: Database["public"]["Enums"]["presentation_status"]
           style?: Database["public"]["Enums"]["presentation_style"]
@@ -3456,6 +4219,7 @@ export type Database = {
           last_name: string
           last_seen_at: string | null
           organization: string | null
+          preferred_language: string
           status: Database["public"]["Enums"]["user_status"]
           timezone: string
           updated_at: string
@@ -3472,6 +4236,7 @@ export type Database = {
           last_name?: string
           last_seen_at?: string | null
           organization?: string | null
+          preferred_language?: string
           status?: Database["public"]["Enums"]["user_status"]
           timezone?: string
           updated_at?: string
@@ -3488,6 +4253,7 @@ export type Database = {
           last_name?: string
           last_seen_at?: string | null
           organization?: string | null
+          preferred_language?: string
           status?: Database["public"]["Enums"]["user_status"]
           timezone?: string
           updated_at?: string
@@ -3778,6 +4544,62 @@ export type Database = {
         }
         Relationships: []
       }
+      service_prices: {
+        Row: {
+          ai_markup: number
+          coins_per_unit: number
+          id: number
+          is_enabled: boolean
+          max_charge: number
+          max_units: number
+          min_charge: number
+          min_units: number
+          promo_percent: number
+          promo_until: string | null
+          service: string
+          unit: string
+          version_id: number
+        }
+        Insert: {
+          ai_markup?: number
+          coins_per_unit?: number
+          id?: number
+          is_enabled?: boolean
+          max_charge?: number
+          max_units?: number
+          min_charge?: number
+          min_units?: number
+          promo_percent?: number
+          promo_until?: string | null
+          service: string
+          unit: string
+          version_id: number
+        }
+        Update: {
+          ai_markup?: number
+          coins_per_unit?: number
+          id?: number
+          is_enabled?: boolean
+          max_charge?: number
+          max_units?: number
+          min_charge?: number
+          min_units?: number
+          promo_percent?: number
+          promo_until?: string | null
+          service?: string
+          unit?: string
+          version_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_prices_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "economy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       slide_elements: {
         Row: {
           content: Json
@@ -3989,62 +4811,95 @@ export type Database = {
       subscription_plans: {
         Row: {
           badge: string
+          badge_i18n: Json
+          billing_model: string
           code: string
           compare_at_amount: number
           created_at: string
           cta_label: string
+          cta_label_i18n: Json
           currency: string
           description: string
+          description_i18n: Json
           estimated_cost_amount: number
           features: Json
           id: string
+          included_coins: number
           is_active: boolean
           is_featured: boolean
+          is_visible: boolean
           name: string
+          name_i18n: Json
+          page_multiplier: number
+          pages_per_unit: number
           period_days: number
+          presentation_units: number
           price_amount: number
           sort_order: number
           subtitle: string
+          subtitle_i18n: Json
           updated_at: string
         }
         Insert: {
           badge?: string
+          badge_i18n?: Json
+          billing_model?: string
           code: string
           compare_at_amount?: number
           created_at?: string
           cta_label?: string
+          cta_label_i18n?: Json
           currency?: string
           description?: string
+          description_i18n?: Json
           estimated_cost_amount?: number
           features?: Json
           id?: string
+          included_coins?: number
           is_active?: boolean
           is_featured?: boolean
+          is_visible?: boolean
           name: string
+          name_i18n?: Json
+          page_multiplier?: number
+          pages_per_unit?: number
           period_days?: number
+          presentation_units?: number
           price_amount: number
           sort_order?: number
           subtitle?: string
+          subtitle_i18n?: Json
           updated_at?: string
         }
         Update: {
           badge?: string
+          badge_i18n?: Json
+          billing_model?: string
           code?: string
           compare_at_amount?: number
           created_at?: string
           cta_label?: string
+          cta_label_i18n?: Json
           currency?: string
           description?: string
+          description_i18n?: Json
           estimated_cost_amount?: number
           features?: Json
           id?: string
+          included_coins?: number
           is_active?: boolean
           is_featured?: boolean
+          is_visible?: boolean
           name?: string
+          name_i18n?: Json
+          page_multiplier?: number
+          pages_per_unit?: number
           period_days?: number
+          presentation_units?: number
           price_amount?: number
           sort_order?: number
           subtitle?: string
+          subtitle_i18n?: Json
           updated_at?: string
         }
         Relationships: []
@@ -4136,6 +4991,214 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      support_attachments: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          mime_type: string | null
+          size_bytes: number | null
+          storage_path: string
+          ticket_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          ticket_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          ticket_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "support_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          from_value: string | null
+          id: number
+          kind: string
+          ticket_id: string
+          to_value: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          from_value?: string | null
+          id?: number
+          kind: string
+          ticket_id: string
+          to_value?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          from_value?: string | null
+          id?: number
+          kind?: string
+          ticket_id?: string
+          to_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          author_id: string | null
+          author_kind: string
+          body: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_kind: string
+          body: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_kind?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assignee_id: string | null
+          category: string
+          closed_at: string | null
+          created_at: string
+          first_response_at: string | null
+          id: string
+          last_message_at: string
+          priority: string
+          related_order_id: string | null
+          related_presentation_id: string | null
+          related_transaction_ref: string | null
+          reopened_count: number
+          resolved_at: string | null
+          staff_unread: number
+          status: string
+          subject: string
+          ticket_number: string
+          updated_at: string
+          user_id: string
+          user_unread: number
+        }
+        Insert: {
+          assignee_id?: string | null
+          category: string
+          closed_at?: string | null
+          created_at?: string
+          first_response_at?: string | null
+          id?: string
+          last_message_at?: string
+          priority?: string
+          related_order_id?: string | null
+          related_presentation_id?: string | null
+          related_transaction_ref?: string | null
+          reopened_count?: number
+          resolved_at?: string | null
+          staff_unread?: number
+          status?: string
+          subject: string
+          ticket_number?: string
+          updated_at?: string
+          user_id: string
+          user_unread?: number
+        }
+        Update: {
+          assignee_id?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          first_response_at?: string | null
+          id?: string
+          last_message_at?: string
+          priority?: string
+          related_order_id?: string | null
+          related_presentation_id?: string | null
+          related_transaction_ref?: string | null
+          reopened_count?: number
+          resolved_at?: string | null
+          staff_unread?: number
+          status?: string
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+          user_id?: string
+          user_unread?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_related_order_id_fkey"
+            columns: ["related_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_related_presentation_id_fkey"
+            columns: ["related_presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       survey_answer_files: {
         Row: {
@@ -4577,6 +5640,177 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_image_candidates: {
+        Row: {
+          attribution: Json
+          confidence: number
+          created_at: string
+          download_url: string | null
+          height: number
+          mime_type: string | null
+          opaque_id: string
+          original_url: string | null
+          provider: string
+          selected_at: string | null
+          session_id: string
+          storage_bucket: string | null
+          storage_path: string | null
+          width: number
+        }
+        Insert: {
+          attribution?: Json
+          confidence?: number
+          created_at?: string
+          download_url?: string | null
+          height?: number
+          mime_type?: string | null
+          opaque_id: string
+          original_url?: string | null
+          provider: string
+          selected_at?: string | null
+          session_id: string
+          storage_bucket?: string | null
+          storage_path?: string | null
+          width?: number
+        }
+        Update: {
+          attribution?: Json
+          confidence?: number
+          created_at?: string
+          download_url?: string | null
+          height?: number
+          mime_type?: string | null
+          opaque_id?: string
+          original_url?: string | null
+          provider?: string
+          selected_at?: string | null
+          session_id?: string
+          storage_bucket?: string | null
+          storage_path?: string | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_image_candidates_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_image_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_image_sessions: {
+        Row: {
+          cancelled_at: string | null
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          image_element_id: string
+          image_slot: string
+          initial_query: string | null
+          intent: string | null
+          latest_query: string | null
+          presentation_id: string
+          slide_id: string
+          slide_index: number
+          status: string
+          telegram_chat_id: number | null
+          telegram_user_id: number | null
+          token_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_element_id: string
+          image_slot: string
+          initial_query?: string | null
+          intent?: string | null
+          latest_query?: string | null
+          presentation_id: string
+          slide_id: string
+          slide_index: number
+          status?: string
+          telegram_chat_id?: number | null
+          telegram_user_id?: number | null
+          token_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_element_id?: string
+          image_slot?: string
+          initial_query?: string | null
+          intent?: string | null
+          latest_query?: string | null
+          presentation_id?: string
+          slide_id?: string
+          slide_index?: number
+          status?: string
+          telegram_chat_id?: number | null
+          telegram_user_id?: number | null
+          token_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_image_sessions_image_element_id_fkey"
+            columns: ["image_element_id"]
+            isOneToOne: false
+            referencedRelation: "slide_elements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_image_sessions_presentation_id_user_id_fkey"
+            columns: ["presentation_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id", "owner_id"]
+          },
+          {
+            foreignKeyName: "telegram_image_sessions_slide_id_presentation_id_user_id_fkey"
+            columns: ["slide_id", "presentation_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "slides"
+            referencedColumns: ["id", "presentation_id", "owner_id"]
+          },
+        ]
+      }
+      telegram_image_updates: {
+        Row: {
+          completed_at: string | null
+          error_code: string | null
+          received_at: string
+          status: string
+          update_id: number
+        }
+        Insert: {
+          completed_at?: string | null
+          error_code?: string | null
+          received_at?: string
+          status?: string
+          update_id: number
+        }
+        Update: {
+          completed_at?: string | null
+          error_code?: string | null
+          received_at?: string
+          status?: string
+          update_id?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -4655,11 +5889,96 @@ export type Database = {
           },
         ]
       }
+      verified_images: {
+        Row: {
+          confidence: number
+          created_at: string
+          creator: string | null
+          display_name: string
+          entity_type: string
+          id: string
+          image_storage_path: string
+          last_checked_at: string | null
+          license: string | null
+          license_url: string | null
+          metadata: Json
+          normalized_entity: string
+          original_url: string | null
+          provider: string
+          source_url: string | null
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          creator?: string | null
+          display_name: string
+          entity_type?: string
+          id?: string
+          image_storage_path: string
+          last_checked_at?: string | null
+          license?: string | null
+          license_url?: string | null
+          metadata?: Json
+          normalized_entity: string
+          original_url?: string | null
+          provider: string
+          source_url?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          creator?: string | null
+          display_name?: string
+          entity_type?: string
+          id?: string
+          image_storage_path?: string
+          last_checked_at?: string | null
+          license?: string | null
+          license_url?: string | null
+          metadata?: Json
+          normalized_entity?: string
+          original_url?: string | null
+          provider?: string
+          source_url?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      welcome_claims: {
+        Row: {
+          created_at: string
+          identity_hash: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          identity_hash: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          identity_hash?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      account_retention_reasons: { Args: { p_user: string }; Returns: string[] }
       admin_adjust_credits: {
         Args: {
           p_amount: number
@@ -4779,6 +6098,11 @@ export type Database = {
         Args: { p_design_id: string; p_name: string; p_slug: string }
         Returns: string
       }
+      admin_economy_overview: { Args: never; Returns: Json }
+      admin_end_marathon: {
+        Args: { p_campaign_id: string; p_reason?: string }
+        Returns: Json
+      }
       admin_finance_overview: { Args: never; Returns: Json }
       admin_game_overview: { Args: { p_days?: number }; Returns: Json }
       admin_gift_credits: {
@@ -4820,6 +6144,15 @@ export type Database = {
           p_months?: number
           p_reason?: string
         }
+        Returns: Json
+      }
+      admin_grant_presentation_pages: {
+        Args: { p_note: string; p_pages: number; p_user_id: string }
+        Returns: string
+      }
+      admin_language_overview: { Args: never; Returns: Json }
+      admin_launch_marathon: {
+        Args: { p_campaign_id: string; p_reason?: string }
         Returns: Json
       }
       admin_list_designs: {
@@ -5025,6 +6358,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_listing_provenance: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
+      admin_marathon_fraud: { Args: { p_campaign_id: string }; Returns: Json }
+      admin_marathon_overview: { Args: never; Returns: Json }
+      admin_marathon_payouts: {
+        Args: { p_campaign_id?: string }
+        Returns: Json
+      }
       admin_mark_settlement_paid: {
         Args: {
           p_destination_note: string
@@ -5065,6 +6408,7 @@ export type Database = {
       admin_moderate_product: {
         Args: { p_action: string; p_product_id: string; p_reason?: string }
         Returns: {
+          approval_source: string | null
           base_price: number
           category_id: string | null
           content_units: number | null
@@ -5079,14 +6423,18 @@ export type Database = {
           material_type: string
           moderated_at: string | null
           moderated_by: string | null
+          moderation_note: string | null
           published_at: string | null
           rating_count: number
           rating_sum: number
           rejection_reason: string | null
+          revision_snapshot: Json | null
           sales_count: number
           search_text: unknown
           seller_id: string
+          source_presentation_id: string | null
           status: Database["public"]["Enums"]["marketplace_product_status"]
+          suspended_at: string | null
           title: string
           updated_at: string
         }
@@ -5126,9 +6474,22 @@ export type Database = {
         }[]
       }
       admin_publish_design: { Args: { p_design_id: string }; Returns: number }
+      admin_publish_economy: {
+        Args: { p_note?: string; p_services?: Json; p_settings: Json }
+        Returns: Json
+      }
       admin_publish_jelement_family: {
         Args: { p_family_id: string }
         Returns: number
+      }
+      admin_reclaim_credits: {
+        Args: {
+          p_amount: number
+          p_idempotency_key?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       admin_recolor_jelement_family: {
         Args: { p_color_tokens: Json; p_family_id: string }
@@ -5160,15 +6521,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      admin_reclaim_credits: {
-        Args: {
-          p_amount: number
-          p_idempotency_key?: string
-          p_reason: string
-          p_user_id: string
-        }
-        Returns: Json
       }
       admin_record_finance_entry: {
         Args: {
@@ -5299,6 +6651,91 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_save_marathon_campaign: {
+        Args: {
+          p_contract_cap?: number
+          p_description?: string
+          p_ends_at?: string
+          p_id?: string
+          p_min_free_price?: number
+          p_min_premium_price?: number
+          p_poster_path?: string
+          p_rules?: string
+          p_starts_at?: string
+          p_title?: string
+        }
+        Returns: Json
+      }
+      admin_save_package: {
+        Args: { p_payload: Json }
+        Returns: {
+          bonus_coins: number
+          code: string
+          coins: number
+          created_at: string
+          currency: string
+          description: string
+          description_i18n: Json
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          label: string
+          label_i18n: Json
+          presentation_pages: number
+          price_amount: number
+          purchase_limit: number | null
+          sort_order: number
+          starts_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coin_packages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_save_plan_economy: {
+        Args: { p_payload: Json; p_plan_id: string }
+        Returns: {
+          badge: string
+          badge_i18n: Json
+          billing_model: string
+          code: string
+          compare_at_amount: number
+          created_at: string
+          cta_label: string
+          cta_label_i18n: Json
+          currency: string
+          description: string
+          description_i18n: Json
+          estimated_cost_amount: number
+          features: Json
+          id: string
+          included_coins: number
+          is_active: boolean
+          is_featured: boolean
+          is_visible: boolean
+          name: string
+          name_i18n: Json
+          page_multiplier: number
+          pages_per_unit: number
+          period_days: number
+          presentation_units: number
+          price_amount: number
+          sort_order: number
+          subtitle: string
+          subtitle_i18n: Json
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_plans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_save_qr_video_experience: {
         Args: {
           p_glow?: number
@@ -5360,22 +6797,33 @@ export type Database = {
         }
         Returns: {
           badge: string
+          badge_i18n: Json
+          billing_model: string
           code: string
           compare_at_amount: number
           created_at: string
           cta_label: string
+          cta_label_i18n: Json
           currency: string
           description: string
+          description_i18n: Json
           estimated_cost_amount: number
           features: Json
           id: string
+          included_coins: number
           is_active: boolean
           is_featured: boolean
+          is_visible: boolean
           name: string
+          name_i18n: Json
+          page_multiplier: number
+          pages_per_unit: number
           period_days: number
+          presentation_units: number
           price_amount: number
           sort_order: number
           subtitle: string
+          subtitle_i18n: Json
           updated_at: string
         }
         SetofOptions: {
@@ -5407,6 +6855,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_set_design_engine: {
+        Args: {
+          p_generative: boolean
+          p_legacy_restricted: boolean
+          p_reason?: string
+        }
+        Returns: Json
+      }
+      admin_set_font_family: {
+        Args: {
+          p_category?: string
+          p_family_id: string
+          p_is_active?: boolean
+          p_is_featured?: boolean
+        }
+        Returns: undefined
+      }
       admin_set_ios_payment_policy: {
         Args: { p_copy?: Json; p_reason?: string; p_review_mode: boolean }
         Returns: Json
@@ -5422,6 +6887,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_set_language_settings: {
+        Args: { p_reason?: string; p_value: Json }
+        Returns: Json
+      }
+      admin_set_marathon_tiers: {
+        Args: { p_campaign_id: string; p_tiers: Json }
+        Returns: Json
+      }
       admin_set_payment_test_mode: {
         Args: {
           p_emails?: string[]
@@ -5431,8 +6904,16 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_set_student_marathon: {
+        Args: { p_enabled: boolean; p_reason?: string }
+        Returns: Json
+      }
       admin_set_subscription_plans: {
         Args: { p_currency?: string; p_plans: Json; p_reason?: string }
+        Returns: Json
+      }
+      admin_set_support_role: {
+        Args: { p_email: string; p_grant: boolean; p_role: string }
         Returns: Json
       }
       admin_set_survey_status: {
@@ -5464,6 +6945,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_set_translation: {
+        Args: {
+          p_entity: string
+          p_field: string
+          p_id: string
+          p_reason?: string
+          p_values: Json
+        }
+        Returns: Json
+      }
       admin_set_usd_rate: {
         Args: { p_rate: number; p_source?: string }
         Returns: Json
@@ -5485,6 +6976,7 @@ export type Database = {
           last_name: string
           last_seen_at: string | null
           organization: string | null
+          preferred_language: string
           status: Database["public"]["Enums"]["user_status"]
           timezone: string
           updated_at: string
@@ -5497,12 +6989,21 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_set_vote_marketplace: {
+        Args: { p_enabled: boolean; p_reason?: string }
+        Returns: Json
+      }
       admin_settle_ai_cost: { Args: { p_note?: string }; Returns: Json }
+      admin_settle_marathon_sales: {
+        Args: { p_reason?: string; p_seller_id: string }
+        Returns: Json
+      }
       admin_subscription_overview: { Args: never; Returns: Json }
       admin_terminate_game_session: {
         Args: { p_reason: string; p_session_id: string }
         Returns: boolean
       }
+      admin_translation_entries: { Args: never; Returns: Json }
       admin_update_app_setting: {
         Args: { p_key: string; p_reason: string; p_value: Json }
         Returns: {
@@ -5583,11 +7084,17 @@ export type Database = {
           created_at: string
           currency: string
           description: string
+          description_i18n: Json
+          ends_at: string | null
           id: string
           is_active: boolean
           label: string
+          label_i18n: Json
+          presentation_pages: number
           price_amount: number
+          purchase_limit: number | null
           sort_order: number
+          starts_at: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -5597,6 +7104,11 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_welcome_backfill: { Args: { p_limit?: number }; Returns: Json }
+      apply_deck_text_styles: {
+        Args: { p_changes: Json; p_fonts?: Json; p_presentation_id: string }
+        Returns: number
       }
       apply_editor_operation: {
         Args: {
@@ -5626,6 +7138,67 @@ export type Database = {
       assert_reads_own_entitlements: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      bind_telegram_image_session: {
+        Args: {
+          p_telegram_chat_id: number
+          p_telegram_user_id: number
+          p_token_hash: string
+        }
+        Returns: {
+          cancelled_at: string | null
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          image_element_id: string
+          image_slot: string
+          initial_query: string | null
+          intent: string | null
+          latest_query: string | null
+          presentation_id: string
+          slide_id: string
+          slide_index: number
+          status: string
+          telegram_chat_id: number | null
+          telegram_user_id: number | null
+          token_hash: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "telegram_image_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      claim_telegram_image_update: {
+        Args: { p_update_id: number }
+        Returns: boolean
+      }
+      cleanup_telegram_image_sessions: { Args: never; Returns: Json }
+      coins_for_pages: {
+        Args: { p_pages: number; p_rate: Json }
+        Returns: number
+      }
+      coins_round: {
+        Args: { p_amount: number; p_rule: string }
+        Returns: number
+      }
+      commit_telegram_image_selection: {
+        Args: {
+          p_byte_size: number
+          p_candidate_id: string
+          p_height: number
+          p_mime_type: string
+          p_session_id: string
+          p_storage_bucket: string
+          p_storage_path: string
+          p_telegram_user_id: number
+          p_width: number
+        }
+        Returns: Json
       }
       create_survey_from_template: {
         Args: { p_template_id: string; p_title?: string }
@@ -5657,6 +7230,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      economy_current: {
+        Args: never
+        Returns: {
+          coin_value_uzs: number
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          id: number
+          max_charge: number
+          min_charge: number
+          no_plan_multiplier: number
+          note: string
+          rounding: string
+          version: number
+          welcome: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "economy_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      economy_warnings: { Args: never; Returns: Json }
       estimate_presentation_credits: {
         Args: {
           p_slide_count: number
@@ -5664,6 +7261,7 @@ export type Database = {
         }
         Returns: number
       }
+      expire_coin_lots: { Args: { p_user_id?: string }; Returns: number }
       fail_generation: {
         Args: {
           p_error_code: string
@@ -5671,6 +7269,10 @@ export type Database = {
           p_job_id: string
         }
         Returns: undefined
+      }
+      fail_stale_generations: {
+        Args: { p_stale_minutes?: number }
+        Returns: number
       }
       finance_month_days: { Args: never; Returns: number }
       finance_period_total: {
@@ -5820,13 +7422,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      grant_welcome_pages: {
+        Args: { p_force?: boolean; p_identity: string; p_user_id: string }
+        Returns: boolean
+      }
+      has_cyrillic: { Args: { p_text: string }; Returns: boolean }
       has_module_access: {
         Args: { p_module_code: string; p_user_id?: string }
         Returns: boolean
       }
       is_admin: { Args: { p_user_id?: string }; Returns: boolean }
+      is_i18n_object: { Args: { p_value: Json }; Returns: boolean }
       is_latin_text: { Args: { p_value: string }; Returns: boolean }
       is_super_admin: { Args: { p_user_id?: string }; Returns: boolean }
+      is_support_manager: { Args: { p_user_id?: string }; Returns: boolean }
+      is_support_staff: { Args: { p_user_id?: string }; Returns: boolean }
       jcoin_refund: {
         Args: {
           p_idempotency_key: string
@@ -5873,6 +7483,93 @@ export type Database = {
         Args: { p_limit?: number; p_query: string; p_slide_role?: string }
         Returns: Json
       }
+      marathon_active_campaign: { Args: never; Returns: Json }
+      marathon_buy_votes: {
+        Args: { p_listing_id: string; p_platform?: string; p_quantity?: number }
+        Returns: Json
+      }
+      marathon_cancel_vote_listing: {
+        Args: { p_listing_id: string }
+        Returns: Json
+      }
+      marathon_candidate: {
+        Args: { p_campaign_id: string; p_user_id: string }
+        Returns: Json
+      }
+      marathon_cast_vote: {
+        Args: {
+          p_candidate_id: string
+          p_kind: Database["public"]["Enums"]["marathon_vote_kind"]
+        }
+        Returns: Json
+      }
+      marathon_decide_milestone: {
+        Args: { p_decision: string; p_position: number }
+        Returns: Json
+      }
+      marathon_fulfil_vote_sale: { Args: { p_order_id: string }; Returns: Json }
+      marathon_join: { Args: never; Returns: Json }
+      marathon_list_votes: {
+        Args: {
+          p_kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          p_quantity: number
+          p_unit_price: number
+        }
+        Returns: Json
+      }
+      marathon_market_campaign: { Args: never; Returns: string }
+      marathon_min_vote_price: {
+        Args: {
+          p_campaign_id: string
+          p_kind: Database["public"]["Enums"]["marathon_vote_kind"]
+        }
+        Returns: number
+      }
+      marathon_my_vote_sales: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          quantity: number
+          sale_id: string
+          seller_fee: number
+          seller_net: number
+          status: string
+          unit_price: number
+        }[]
+      }
+      marathon_my_votes: { Args: never; Returns: Json }
+      marathon_search_candidates: {
+        Args: { p_limit?: number; p_offset?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          premium_votes: number
+          total_votes: number
+          user_id: string
+          username: string
+        }[]
+      }
+      marathon_vote_market: {
+        Args: {
+          p_kind?: Database["public"]["Enums"]["marathon_vote_kind"]
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          buyer_fee: number
+          buyer_total: number
+          is_mine: boolean
+          kind: Database["public"]["Enums"]["marathon_vote_kind"]
+          listing_id: string
+          remaining: number
+          unit_price: number
+        }[]
+      }
+      marathon_vote_quote: {
+        Args: { p_quantity: number; p_unit_price: number }
+        Returns: Json
+      }
       mark_notifications_read: { Args: { p_id?: string }; Returns: number }
       marketplace_attach_file: {
         Args: {
@@ -5897,6 +7594,28 @@ export type Database = {
           p_platform?: string
           p_product_id: string
           p_refund_acknowledged?: boolean
+        }
+        Returns: Json
+      }
+      marketplace_fast_draft: {
+        Args: { p_presentation_id: string }
+        Returns: Json
+      }
+      marketplace_fast_publish_check: {
+        Args: { p_presentation_id: string; p_user_id?: string }
+        Returns: Json
+      }
+      marketplace_fast_publish_finish: {
+        Args: {
+          p_cover_path: string
+          p_description: string
+          p_main_path: string
+          p_main_size: number
+          p_preview_paths: string[]
+          p_price: number
+          p_product_id: string
+          p_title: string
+          p_user_id: string
         }
         Returns: Json
       }
@@ -5985,8 +7704,10 @@ export type Database = {
           total_amount: number
         }[]
       }
+      my_support_tickets: { Args: never; Returns: Json }
       my_surveys: { Args: never; Returns: Json }
       my_usage: { Args: { p_user_id?: string }; Returns: Json }
+      my_wallet: { Args: never; Returns: Json }
       next_order_number: { Args: never; Returns: string }
       normalize_uz_phone: { Args: { p_value: string }; Returns: string }
       notify_upcoming_settlements: {
@@ -6279,6 +8000,18 @@ export type Database = {
         Args: { p_platform?: string }
         Returns: boolean
       }
+      plan_lot_grant: {
+        Args: {
+          p_coins: number
+          p_converted: number
+          p_expires_at: string
+          p_order: Database["public"]["Tables"]["orders"]["Row"]
+          p_plan_code: string
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       pptx_import_fail: {
         Args: { p_message: string; p_presentation_id: string }
         Returns: undefined
@@ -6290,16 +8023,21 @@ export type Database = {
           author_name: string | null
           created_at: string
           current_version: number
+          design_dna: Json | null
+          design_engine: string | null
           design_id: string | null
+          design_request: Json | null
           design_version: number | null
           error_message: string | null
           estimated_credits: number
           generated_slide_count: number
           generation_cost_usd: number
           id: string
+          language: string
           owner_id: string
           palette_code: string | null
           requested_slide_count: number
+          requirements: string | null
           reserved_credits: number
           status: Database["public"]["Enums"]["presentation_status"]
           style: Database["public"]["Enums"]["presentation_style"]
@@ -6323,6 +8061,10 @@ export type Database = {
         Returns: string
       }
       pptx_literal_text: { Args: { p_document: Json }; Returns: string }
+      presentation_actor_kind: {
+        Args: { p_owner: string; p_presentation_id: string }
+        Returns: string
+      }
       presentation_apply_command: {
         Args: { p_command: string; p_session_id: string; p_value?: number }
         Returns: {
@@ -6390,6 +8132,14 @@ export type Database = {
         Returns: Json
       }
       presentation_new_token: { Args: never; Returns: string }
+      presentation_pages_finish: {
+        Args: { p_capture: boolean; p_job_id: string }
+        Returns: number
+      }
+      presentation_pages_reserve: {
+        Args: { p_job_id: string; p_pages: number; p_user_id: string }
+        Returns: Json
+      }
       presentation_pair_info: { Args: { p_token: string }; Returns: Json }
       presentation_pairing_claim: {
         Args: { p_presentation_id?: string; p_token: string }
@@ -6398,6 +8148,16 @@ export type Database = {
       presentation_pairing_rotate: {
         Args: { p_current_token: string; p_session_id: string }
         Returns: Json
+      }
+      presentation_quote: { Args: { p_slide_count: number }; Returns: Json }
+      presentation_quote_for: {
+        Args: { p_pages: number; p_user_id: string }
+        Returns: Json
+      }
+      presentation_rate: { Args: { p_user_id: string }; Returns: Json }
+      presentation_record_revision: {
+        Args: { p_presentation_id: string; p_source: string }
+        Returns: undefined
       }
       presentation_screen_command: {
         Args: {
@@ -6477,6 +8237,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      purge_account_data: { Args: { p_user: string }; Returns: Json }
       purge_expired_game_sessions: { Args: never; Returns: number }
       purge_expired_presentation_sessions: { Args: never; Returns: number }
       purge_expired_survey_responses: {
@@ -6497,6 +8258,7 @@ export type Database = {
         Returns: Json
       }
       reap_stale_export_jobs: { Args: { p_owner_id?: string }; Returns: number }
+      reconcile_credit_reservations: { Args: never; Returns: number }
       record_survey_export: {
         Args: {
           p_form_id: string
@@ -6592,6 +8354,30 @@ export type Database = {
         }[]
       }
       seller_earnings_summary: { Args: { p_seller_id?: string }; Returns: Json }
+      service_price: {
+        Args: { p_service: string }
+        Returns: {
+          ai_markup: number
+          coins_per_unit: number
+          id: number
+          is_enabled: boolean
+          max_charge: number
+          max_units: number
+          min_charge: number
+          min_units: number
+          promo_percent: number
+          promo_until: string | null
+          service: string
+          unit: string
+          version_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "service_prices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_survey_status: {
         Args: {
           p_form_id: string
@@ -6631,8 +8417,10 @@ export type Database = {
       start_generation: {
         Args: {
           p_author_name?: string
+          p_confirmed_coins?: number
           p_design_slug?: string
           p_idempotency_key?: string
+          p_language?: string
           p_palette_code?: string
           p_presentation_id: string
           p_slide_count: number
@@ -6655,6 +8443,62 @@ export type Database = {
       }
       subscription_restart_preview: {
         Args: { p_user_id?: string }
+        Returns: Json
+      }
+      support_attach: {
+        Args: {
+          p_message_id: string
+          p_paths: string[]
+          p_ticket_id: string
+          p_user_id: string
+        }
+        Returns: number
+      }
+      support_create_ticket: {
+        Args: {
+          p_attachments?: string[]
+          p_body: string
+          p_category: string
+          p_order_number?: string
+          p_presentation_id?: string
+          p_subject: string
+          p_transaction_ref?: string
+        }
+        Returns: Json
+      }
+      support_inbox: { Args: { p_filters?: Json }; Returns: Json }
+      support_metrics: { Args: never; Returns: Json }
+      support_reopen: { Args: { p_ticket_id: string }; Returns: Json }
+      support_reply: {
+        Args: { p_attachments?: string[]; p_body: string; p_ticket_id: string }
+        Returns: Json
+      }
+      support_staff_list: { Args: never; Returns: Json }
+      support_staff_reply: {
+        Args: {
+          p_attachments?: string[]
+          p_body: string
+          p_internal?: boolean
+          p_status?: string
+          p_ticket_id: string
+        }
+        Returns: Json
+      }
+      support_ticket_context: { Args: { p_ticket_id: string }; Returns: Json }
+      support_ticket_detail: { Args: { p_ticket_id: string }; Returns: Json }
+      support_ticket_json: {
+        Args: { p_staff: boolean; p_ticket_id: string }
+        Returns: Json
+      }
+      support_unread_count: { Args: never; Returns: number }
+      support_update_ticket: {
+        Args: {
+          p_assignee_id?: string
+          p_priority?: string
+          p_status?: string
+          p_ticket_id: string
+          p_unassign?: boolean
+        }
         Returns: Json
       }
       survey_can_read_response: {
@@ -6687,9 +8531,30 @@ export type Database = {
         Args: { p_period: string; p_user_id: string }
         Returns: string
       }
+      verify_image: {
+        Args: {
+          p_creator?: string
+          p_display_name: string
+          p_entity_type: string
+          p_license?: string
+          p_license_url?: string
+          p_metadata?: Json
+          p_normalized_entity: string
+          p_original_url?: string
+          p_provider: string
+          p_source_url?: string
+          p_storage_path: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      app_role: "user" | "admin" | "super_admin"
+      app_role:
+        | "user"
+        | "admin"
+        | "super_admin"
+        | "support_manager"
+        | "support_agent"
       asset_kind:
         | "upload"
         | "web"
@@ -6697,6 +8562,7 @@ export type Database = {
         | "icon"
         | "thumbnail"
         | "export"
+        | "stock"
       credit_transaction_type:
         | "grant"
         | "reservation"
@@ -6713,6 +8579,8 @@ export type Database = {
         | "game_reward"
         | "game_reward_refund"
         | "coin_purchase"
+        | "plan_grant"
+        | "plan_expiry"
       design_source: "code" | "pptx" | "svg"
       element_type:
         | "text"
@@ -6760,6 +8628,9 @@ export type Database = {
       jelement_status: "draft" | "published" | "archived"
       job_status: "queued" | "running" | "succeeded" | "failed" | "cancelled"
       jslayd_design_status: "draft" | "published" | "archived"
+      marathon_status: "draft" | "active" | "ended"
+      marathon_vote_kind: "free" | "premium"
+      marathon_vote_source: "direct" | "marketplace"
       marketplace_file_kind: "main" | "study_guide" | "preview"
       marketplace_product_status:
         | "draft"
@@ -6797,6 +8668,9 @@ export type Database = {
         | "game_result"
         | "order_paid"
         | "order_failed"
+        | "marathon_vote"
+        | "marathon_milestone"
+        | "support_reply"
       order_purpose:
         | "subscription"
         | "jcoin"
@@ -6806,6 +8680,7 @@ export type Database = {
         | "marketplace_independent_work"
         | "marketplace_game"
         | "other_marketplace_product"
+        | "marathon_votes"
       order_status:
         | "pending"
         | "awaiting_verification"
@@ -7014,8 +8889,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["user", "admin", "super_admin"],
-      asset_kind: ["upload", "web", "generated", "icon", "thumbnail", "export"],
+      app_role: [
+        "user",
+        "admin",
+        "super_admin",
+        "support_manager",
+        "support_agent",
+      ],
+      asset_kind: [
+        "upload",
+        "web",
+        "generated",
+        "icon",
+        "thumbnail",
+        "export",
+        "stock",
+      ],
       credit_transaction_type: [
         "grant",
         "reservation",
@@ -7032,6 +8921,8 @@ export const Constants = {
         "game_reward",
         "game_reward_refund",
         "coin_purchase",
+        "plan_grant",
+        "plan_expiry",
       ],
       design_source: ["code", "pptx", "svg"],
       element_type: [
@@ -7084,6 +8975,9 @@ export const Constants = {
       jelement_status: ["draft", "published", "archived"],
       job_status: ["queued", "running", "succeeded", "failed", "cancelled"],
       jslayd_design_status: ["draft", "published", "archived"],
+      marathon_status: ["draft", "active", "ended"],
+      marathon_vote_kind: ["free", "premium"],
+      marathon_vote_source: ["direct", "marketplace"],
       marketplace_file_kind: ["main", "study_guide", "preview"],
       marketplace_product_status: [
         "draft",
@@ -7123,6 +9017,9 @@ export const Constants = {
         "game_result",
         "order_paid",
         "order_failed",
+        "marathon_vote",
+        "marathon_milestone",
+        "support_reply",
       ],
       order_purpose: [
         "subscription",
@@ -7133,6 +9030,7 @@ export const Constants = {
         "marketplace_independent_work",
         "marketplace_game",
         "other_marketplace_product",
+        "marathon_votes",
       ],
       order_status: [
         "pending",
@@ -7224,3 +9122,4 @@ export const Constants = {
     },
   },
 } as const
+
