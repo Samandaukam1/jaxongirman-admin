@@ -11,8 +11,10 @@
   --brand-soft: #F0E9FC;
   --brand-tint: #DCCBF6;
   --on-brand: #F1EAFD;
-  --on-brand-dim: #C9B6EC;
-  --on-brand-faint: #A992DA;
+  /* Held above 4.5:1 on the violet panel — the small print once sat at 2.6:1.
+     Dim stays a step brighter than faint so the menu reads above the caption. */
+  --on-brand-dim: #E2D6F8;
+  --on-brand-faint: #D8C9F5;
   --canvas: #F6F5FA;
   --surface: #FFFFFF;
   --surface-muted: #FAF9FD;
@@ -40,7 +42,9 @@ h1, h2, h3 { font-family: "Manrope", sans-serif; letter-spacing: -0.035em; }
 .login-story p:not(.eyebrow) { max-width: 550px; font-size: 18px; line-height: 1.7; color: var(--on-brand-dim); }
 .login-story small { color: var(--on-brand-faint); }
 .brand-lockup { display: flex; align-items: center; gap: 12px; font: 700 17px "Manrope"; }
-.brand-mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; color: var(--brand); background: var(--canvas); }
+/* The app icon, cut the way the phone cuts it — the same tile the website's
+   header carries. The picture has its own white ground. */
+.brand-mark { width: 42px; height: 42px; display: block; flex: 0 0 auto; border-radius: 12px; object-fit: cover; background: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 6px 16px rgba(12,5,28,.3); }
 .login-panel { display: grid; place-items: center; padding: 36px; }
 .login-card { width: min(430px, 100%); background: white; padding: clamp(28px, 5vw, 52px); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 64px rgba(40,26,64,.09); }
 .login-card h2 { font-size: 34px; margin: 10px 0 8px; }
@@ -70,7 +74,6 @@ textarea:focus, select:focus { border-color: var(--brand-ink); box-shadow: 0 0 0
 .admin-shell { min-height: 100vh; background: var(--canvas); }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 268px; padding: 22px 16px 18px; display: flex; flex-direction: column; color: var(--on-brand); background: var(--brand); border-right: 1px solid rgba(255,255,255,.08); }
 .sidebar-brand { min-height: 58px; padding: 3px 8px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
-.sidebar-brand .brand-mark { color: var(--brand); background: var(--brand-soft); flex: 0 0 auto; }
 .sidebar-brand div { display: grid; gap: 3px; min-width: 0; }
 .sidebar-brand strong { font: 700 16px "Manrope", sans-serif; }
 .sidebar-brand small { color: var(--on-brand-faint); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
