@@ -4074,6 +4074,7 @@ export type Database = {
           reserved_credits: number
           status: Database["public"]["Enums"]["user_status"]
           user_id: string
+          username: string
         }[]
       }
       admin_mark_settlement_paid: {
