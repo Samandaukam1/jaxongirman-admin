@@ -1,10 +1,10 @@
 import {
-  Sparkles,
-  BadgeCheck,
-  AppWindow, Landmark, Languages, LifeBuoy, Monitor, Moon, MonitorPlay, Blocks, ClipboardList, FileStack, Coins, Cpu, Gamepad2, Gift, Image as ImageIcon, LayoutDashboard, LogOut, Menu, Palette, Presentation, Receipt, ScrollText, Shapes, Smartphone, Store, Sun, TrendingUp, Trophy, Type, Users, Wallet, X } from "lucide-react";
+  AppWindow, BadgeCheck, BellRing, Blocks, ClipboardList, Coins, Cpu, FileStack, Flag, GalleryHorizontal, Gamepad2, Gift, Image as ImageIcon, Landmark, Languages, LayoutDashboard, LifeBuoy, LogOut, Megaphone, Menu, Monitor, MonitorPlay, Moon, Palette, Presentation, Receipt, ScrollText, Shapes, Smartphone, Sparkles, Store, Sun, TrendingUp, Trophy, Type, Users, Wallet, X,
+} from "lucide-react";
 import { ROLE_LABELS } from "@jaxongirman/types";
 import { useEffect, useState, type ReactNode } from "react";
 
+import logo from "@/assets/logo.png";
 import { AppLink } from "@/lib/router";
 import { supportUnreadCount } from "@/lib/support";
 import { useAuth } from "@/providers/AuthProvider";
@@ -12,6 +12,10 @@ import { useTheme } from "@/providers/ThemeProvider";
 
 const navigation = [
   { to: "/", label: "Boshqaruv", icon: LayoutDashboard, end: true },
+  { to: "/tavsiyalar", label: "Tavsiya va reklama", icon: Megaphone },
+  { to: "/taqdimot-reklama", label: "Taqdimot reklamasi", icon: GalleryHorizontal },
+  { to: "/xabar-yuborish", label: "Hammaga xabar", icon: BellRing },
+  { to: "/chat-shikoyatlari", label: "Chat shikoyatlari", icon: Flag },
   { to: "/users", label: "Foydalanuvchilar", icon: Users },
   { to: "/presentations", label: "Prezentatsiyalar", icon: Presentation },
   { to: "/dizayn-engine", label: "Liquid Glass dizayn", icon: Sparkles },
@@ -78,7 +82,7 @@ export function AdminLayout({ pathname, children }: { pathname: string; children
       {open && <button className="sidebar-scrim" type="button" aria-label="Menyuni yopish" onClick={() => setOpen(false)} />}
       <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <span className="brand-mark">J</span>
+          <img className="brand-mark" src={logo} alt="" width={42} height={42} />
           <div><strong>Jaxongirman</strong><small>Control Center</small></div>
           <button className="sidebar-close" type="button" aria-label="Yopish" onClick={() => setOpen(false)}><X size={20} /></button>
         </div>

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,800;1,400&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,700;1,500&display=swap");
 
 /* Brand palette. Every colour in this file resolves through these tokens, so
    re-skinning the console is a change to this block and nothing else.
@@ -11,8 +11,10 @@
   --brand-soft: #F0E9FC;
   --brand-tint: #DCCBF6;
   --on-brand: #F1EAFD;
-  --on-brand-dim: #C9B6EC;
-  --on-brand-faint: #A992DA;
+  /* Held above 4.5:1 on the violet panel — the small print once sat at 2.6:1.
+     Dim stays a step brighter than faint so the menu reads above the caption. */
+  --on-brand-dim: #E2D6F8;
+  --on-brand-faint: #D8C9F5;
   --canvas: #F6F5FA;
   --surface: #FFFFFF;
   --surface-muted: #FAF9FD;
@@ -61,7 +63,10 @@ h1, h2, h3 { font-family: "Manrope", sans-serif; letter-spacing: -0.035em; }
 .login-story p:not(.eyebrow) { max-width: 550px; font-size: 18px; line-height: 1.7; color: var(--on-brand-dim); }
 .login-story small { color: var(--on-brand-faint); }
 .brand-lockup { display: flex; align-items: center; gap: 12px; font: 700 17px "Manrope"; }
-.brand-mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; color: var(--brand); background: var(--canvas); }
+/* The app icon, cut the way the phone cuts it — the same tile the website's
+   header carries. The picture has its own white ground, so it reads the same
+   on the violet panel by day and the dark one at night. */
+.brand-mark { width: 42px; height: 42px; display: block; flex: 0 0 auto; border-radius: 12px; object-fit: cover; background: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 6px 16px rgba(12,5,28,.3); }
 .login-panel { display: grid; place-items: center; padding: 36px; }
 .login-card { width: min(430px, 100%); background: var(--surface); padding: clamp(28px, 5vw, 52px); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 64px rgba(40,26,64,.09); }
 .login-card h2 { font-size: 34px; margin: 10px 0 8px; }
@@ -89,14 +94,20 @@ a { color: inherit; }
 textarea, select { color: var(--ink); border: 1px solid var(--border); border-radius: 11px; background: var(--field); outline: none; }
 textarea:focus, select:focus { border-color: var(--brand-ink); box-shadow: 0 0 0 3px rgba(108,52,201,.12); }
 .admin-shell { min-height: 100vh; background: var(--canvas); }
-.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 268px; padding: 22px 16px 18px; display: flex; flex-direction: column; color: var(--on-brand); background: var(--brand-surface); border-right: 1px solid rgba(255,255,255,.08); }
-.sidebar-brand { min-height: 58px; padding: 3px 8px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
-.sidebar-brand .brand-mark { color: var(--brand); background: var(--brand-soft); flex: 0 0 auto; }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 268px; height: 100vh; height: 100dvh; overflow: hidden; padding: 22px 16px max(18px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; color: var(--on-brand); background: var(--brand-surface); border-right: 1px solid rgba(255,255,255,.08); }
+.sidebar-brand { flex-shrink: 0; min-height: 58px; padding: 3px 8px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .sidebar-brand div { display: grid; gap: 3px; min-width: 0; }
 .sidebar-brand strong { font: 700 16px "Manrope", sans-serif; }
 .sidebar-brand small { color: var(--on-brand-faint); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .sidebar-close { display: none; margin-left: auto; padding: 7px; color: var(--on-brand-solid); border: 0; background: transparent; }
-.sidebar-nav { display: grid; gap: 5px; margin-top: 24px; }
+/* The menu scrolls inside the sidebar. It used to be a plain grid in a
+   fixed-height column, so once the list outgrew the window its bottom items —
+   and the theme switch and account under them — were cut off with no way to
+   reach them. The brand block above and the account below stay put. */
+.sidebar-nav { display: grid; gap: 5px; margin: 24px -8px 12px 0; padding-right: 6px; align-content: start; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; }
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255,255,255,.22); }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
 .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 13px; color: var(--on-brand-dim); border-radius: 11px; text-decoration: none; font-size: 14px; font-weight: 600; transition: .16s ease; }
 .sidebar-nav a:hover { color: var(--on-brand-solid); background: rgba(255,255,255,.06); }
 .sidebar-nav a.active { color: var(--brand); background: var(--brand-soft); box-shadow: 0 8px 24px rgba(0,0,0,.11); }
@@ -104,7 +115,7 @@ textarea:focus, select:focus { border-color: var(--brand-ink); box-shadow: 0 0 0
 .sidebar-section { margin: 18px 13px 6px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); color: var(--on-brand-dim); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
 .sidebar-nav a.sidebar-archived { padding: 9px 13px; font-size: 13px; opacity: .62; }
 .sidebar-nav a.sidebar-archived.active { opacity: 1; }
-.sidebar-account { margin-top: auto; padding: 13px 8px 0; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,.1); }
+.sidebar-account { flex-shrink: 0; margin-top: auto; padding: 13px 8px 0; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,.1); }
 .account-avatar { width: 35px; height: 35px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; color: var(--brand); background: var(--brand-tint); font-weight: 800; }
 .account-copy { display: grid; gap: 2px; min-width: 0; flex: 1; }
 .account-copy strong { font-size: 12px; }
@@ -118,11 +129,11 @@ textarea:focus, select:focus { border-color: var(--brand-ink); box-shadow: 0 0 0
 .mobile-menu { display: none; position: fixed; z-index: 28; top: 16px; left: 16px; width: 42px; height: 42px; place-items: center; color: var(--on-brand-solid); border: 0; border-radius: 12px; background: var(--brand-surface); box-shadow: 0 8px 20px rgba(108,52,201,.28); }
 .metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .metric-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.metric-card { min-height: 190px; padding: 22px; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(40,26,64,.045); }
+.metric-card { min-height: 190px; padding: 22px; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); box-shadow: 0 10px 30px rgba(40,26,64,.045); }
 .metric-icon { width: 38px; height: 38px; display: grid; place-items: center; margin-bottom: 24px; color: var(--brand-ink); border-radius: 11px; background: var(--brand-soft); }
 .metric-card > span { color: var(--ink-muted); font-size: 12px; font-weight: 600; }
 .metric-card > strong { margin: 6px 0 3px; font: 700 clamp(26px, 2.4vw, 36px) "Manrope", sans-serif; letter-spacing: -.05em; }
-.metric-card > small { margin-top: auto; color: var(--ink-soft); font-size: 11px; }
+.metric-card > small { margin-top: auto; color: var(--ink-muted); font-size: 11px; }
 .insight-strip { padding: 19px 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; color: var(--on-brand); border-radius: 16px; background: var(--brand-panel-deep, var(--brand-deep)); }
 .insight-strip div { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .insight-strip svg { color: var(--on-brand-dim); }
@@ -178,7 +189,7 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
   position: relative; width: min(500px, 100%);
   max-height: calc(100dvh - 44px);
   display: flex; flex-direction: column;
-  border-radius: 20px; background: #fff; box-shadow: 0 30px 90px rgba(24,10,48,.3);
+  border-radius: 20px; background: var(--surface); box-shadow: 0 30px 90px rgba(24,10,48,.3);
 }
 .modal-head { padding: 32px 32px 0; flex: none; }
 .modal-body { padding: 14px 32px 32px; overflow-y: auto; overscroll-behavior: contain; }
@@ -199,8 +210,8 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
 .settings-list textarea { min-height: 72px; padding: 11px; resize: vertical; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 /* Settlement card: amber while the provider is owed money, green once paid. */
-.metric-card.is-due { border-color: #e6d9b5; background: #fffdf6; }
-.metric-card.is-due .metric-icon { color: #775f24; background: #fbf5e3; }
+.metric-card.is-due { border-color: var(--warn-rim); background: var(--warn-soft); }
+.metric-card.is-due .metric-icon { color: var(--warn-ink); background: color-mix(in srgb, var(--warn-rim) 45%, var(--warn-soft)); }
 .metric-card.is-settled { border-color: var(--ok-rim); background: var(--ok-soft); }
 .metric-card.is-settled .metric-icon { color: var(--ok-ink); background: var(--ok-soft); }
 .metric-card .metric-secondary { margin: 0 0 4px; color: var(--ink-muted); font-size: 12px; font-weight: 600; }
@@ -308,7 +319,7 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
 .plan-row {
   display: grid; gap: 10px; align-items: end; width: 100%;
   grid-template-columns: 1fr 1.4fr 1fr 0.8fr auto auto;
-  padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: #fff;
+  padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
 }
 .plan-row .switch-row { margin-top: 0; }
 @media (max-width: 900px) { .plan-row { grid-template-columns: 1fr 1fr; } }
@@ -695,7 +706,7 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
 .element-card-delete {
   position: absolute; top: 8px; right: 8px;
   width: 28px; height: 28px; display: grid; place-items: center;
-  border: 1px solid var(--border); border-radius: 8px; background: #fff;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
   color: var(--ink-soft); opacity: 0; transition: opacity .12s ease, color .12s ease;
 }
 .element-card:hover .element-card-delete,
@@ -909,14 +920,18 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
  * in it: a true #000 makes every border float and every shadow disappear, and
  * an interface made of cards needs its edges. Ink is held above 8:1 on the
  * canvas and above 4.5:1 everywhere text sits.
+ *
+ * The brand panels (sidebar, insight strip, login story) stay dark at night,
+ * so the `--on-brand` family on them stays light — it once flipped dark along
+ * with the ink and left the sidebar's words at 1.1:1.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { color-scheme: dark; }
-  :root:not([data-theme="light"]) { --brand-surface: #241B38; --on-brand-solid: #F3F1F8; --brand-panel-deep: #2A1F45; --brand: #A47BF0; --brand-ink: #B99BF5; --brand-deep: #C9B4F8; --brand-soft: #251C38; --brand-tint: #3A2B57; --on-brand: #16111F; --on-brand-dim: #6B5A8E; --on-brand-faint: #4E4168; --canvas: #14131A; --surface: #1B1A23; --surface-muted: #21202B; --field: #23222E; --ink: #F3F1F8; --ink-body: #D6D2E0; --ink-muted: #A29CB4; --ink-soft: #7C7690; --border: #2E2C3A; --border-soft: #262533; --border-strong: #423F53; --ok-ink: #4ED8A8; --ok-soft: #12302A; --ok-rim: #1F5546; --warn-ink: #E3AC5C; --warn-soft: #322512; --warn-rim: #5A4520; --bad-ink: #F58497; --bad-soft: #33161E; --bad-rim: #5C2833; }
+  :root:not([data-theme="light"]) { --brand-surface: #241B38; --on-brand-solid: #F3F1F8; --brand-panel-deep: #2A1F45; --brand: #A47BF0; --brand-ink: #B99BF5; --brand-deep: #C9B4F8; --brand-soft: #251C38; --brand-tint: #3A2B57; --on-brand: #EDE7F8; --on-brand-dim: #B8AAD6; --on-brand-faint: #A193C2; --canvas: #14131A; --surface: #1B1A23; --surface-muted: #21202B; --field: #23222E; --ink: #F3F1F8; --ink-body: #D6D2E0; --ink-muted: #A29CB4; --ink-soft: #7C7690; --border: #2E2C3A; --border-soft: #262533; --border-strong: #423F53; --ok-ink: #4ED8A8; --ok-soft: #12302A; --ok-rim: #1F5546; --warn-ink: #E3AC5C; --warn-soft: #322512; --warn-rim: #5A4520; --bad-ink: #F58497; --bad-soft: #33161E; --bad-rim: #5C2833; }
 }
 
 :root[data-theme="dark"] { color-scheme: dark; }
-:root[data-theme="dark"] { --brand-surface: #241B38; --on-brand-solid: #F3F1F8; --brand-panel-deep: #2A1F45; --brand: #A47BF0; --brand-ink: #B99BF5; --brand-deep: #C9B4F8; --brand-soft: #251C38; --brand-tint: #3A2B57; --on-brand: #16111F; --on-brand-dim: #6B5A8E; --on-brand-faint: #4E4168; --canvas: #14131A; --surface: #1B1A23; --surface-muted: #21202B; --field: #23222E; --ink: #F3F1F8; --ink-body: #D6D2E0; --ink-muted: #A29CB4; --ink-soft: #7C7690; --border: #2E2C3A; --border-soft: #262533; --border-strong: #423F53; --ok-ink: #4ED8A8; --ok-soft: #12302A; --ok-rim: #1F5546; --warn-ink: #E3AC5C; --warn-soft: #322512; --warn-rim: #5A4520; --bad-ink: #F58497; --bad-soft: #33161E; --bad-rim: #5C2833; }
+:root[data-theme="dark"] { --brand-surface: #241B38; --on-brand-solid: #F3F1F8; --brand-panel-deep: #2A1F45; --brand: #A47BF0; --brand-ink: #B99BF5; --brand-deep: #C9B4F8; --brand-soft: #251C38; --brand-tint: #3A2B57; --on-brand: #EDE7F8; --on-brand-dim: #B8AAD6; --on-brand-faint: #A193C2; --canvas: #14131A; --surface: #1B1A23; --surface-muted: #21202B; --field: #23222E; --ink: #F3F1F8; --ink-body: #D6D2E0; --ink-muted: #A29CB4; --ink-soft: #7C7690; --border: #2E2C3A; --border-soft: #262533; --border-strong: #423F53; --ok-ink: #4ED8A8; --ok-soft: #12302A; --ok-rim: #1F5546; --warn-ink: #E3AC5C; --warn-soft: #322512; --warn-rim: #5A4520; --bad-ink: #F58497; --bad-soft: #33161E; --bad-rim: #5C2833; }
 
 /* The theme control in the sidebar. */
 .theme-switch { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-muted); }
@@ -1337,3 +1352,234 @@ td small { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; 
 .language-input { width: 100%; min-width: 180px; }
 textarea.language-input { min-height: 88px; resize: vertical; font: inherit; }
 .language-json { font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+
+/* The sidebar's fixed parts never give their height to the scrolling menu. */
+.sidebar-brand, .sidebar .theme-switch, .sidebar-account { flex-shrink: 0; }
+
+/* ------------------------------------------------------------------------
+   Tavsiya va reklama (PromosPage)
+   ------------------------------------------------------------------------ */
+.promo-new { min-height: 44px; }
+.promo-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.promo-summary div { padding: 16px 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); display: grid; gap: 3px; }
+.promo-summary strong { font: 800 26px "Manrope", sans-serif; color: var(--ink); }
+.promo-summary span { font-size: 12px; color: var(--ink-muted); }
+.promo-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.promo-filters button { min-height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--ink-muted); font-weight: 700; font-size: 13px; }
+.promo-filters button.on { color: var(--on-brand-solid); border-color: var(--brand); background: var(--brand); }
+
+.promo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.promo-card { overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); box-shadow: 0 10px 30px rgba(40,26,64,.05); display: flex; flex-direction: column; }
+.promo-card.is-off .promo-card-banner { filter: grayscale(.65); opacity: .8; }
+.promo-card-banner { position: relative; background: linear-gradient(135deg, #563BD0, #251068); }
+.promo-card-banner img, .promo-card-banner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.promo-card-nobanner { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.7); font-size: 12px; font-weight: 700; }
+.promo-kind { position: absolute; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: rgba(255,255,255,.92); color: #4B1FA8; }
+.promo-kind.ad { background: #F6C453; color: #3A2304; }
+.promo-card-body { padding: 14px 16px 16px; display: grid; gap: 8px; }
+.promo-card-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.promo-card-title strong { font: 700 16px "Manrope", sans-serif; line-height: 1.3; }
+.promo-card-body p { margin: 0; font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.promo-card-body dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 2px 0; }
+.promo-card-body dl div { padding: 8px 10px; border-radius: 10px; background: var(--surface-muted); }
+.promo-card-body dt { font-size: 10px; color: var(--ink-soft); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.promo-card-body dd { margin: 2px 0 0; font: 800 15px "Manrope", sans-serif; }
+.promo-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.promo-card-actions .secondary-button.compact { padding: 0 11px; }
+.promo-card-title .status-badge { flex: 0 0 auto; white-space: nowrap; }
+.icon-button.danger { color: #A32036; }
+.icon-button:disabled { opacity: .4; cursor: default; }
+.status-badge.status-published { color: var(--ok-ink); border-color: var(--ok-rim); background: var(--ok-soft); }
+.promo-warn { color: var(--bad-ink) !important; white-space: normal !important; font-size: 12px; margin: 0; line-height: 1.45; }
+.promo-ok { color: var(--ok-ink); font-size: 12px; margin: 0; line-height: 1.45; }
+
+/* Editor */
+.promo-editor-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 12px 0; background: var(--canvas); border-bottom: 1px solid var(--border); }
+.promo-editor-title { flex: 1; min-width: 0; }
+.promo-editor-title .eyebrow { margin: 0; }
+.promo-editor-title h1 { margin: 2px 0 0; font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.promo-editor-save { display: flex; align-items: center; gap: 8px; }
+.promo-saved { color: var(--ok-ink); font-size: 12px; font-weight: 700; }
+.promo-dirty { color: var(--warn-ink); font-size: 12px; font-weight: 700; }
+.promo-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start; }
+.promo-form { display: grid; gap: 16px; min-width: 0; }
+.promo-section { display: grid; gap: 14px; }
+.promo-section header h2 { margin: 0; font: 800 17px "Manrope", sans-serif; }
+.promo-section header p { margin: 4px 0 0; color: var(--ink-muted); font-size: 13px; line-height: 1.5; }
+.promo-section label { margin-top: 0; }
+.promo-section input:not([type="checkbox"]):not([type="color"]), .promo-section select, .promo-section textarea { width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--field); color: var(--ink); font-size: 14px; }
+.promo-section textarea { resize: vertical; line-height: 1.55; }
+.promo-segment { display: inline-flex; gap: 4px; padding: 4px; border-radius: 13px; background: var(--surface-muted); border: 1px solid var(--border); width: fit-content; }
+.promo-segment button { min-height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-muted); font-weight: 700; font-size: 13px; }
+.promo-segment button.on { color: var(--on-brand-solid); background: var(--brand); box-shadow: 0 6px 16px rgba(108,52,201,.25); }
+.promo-segment button:disabled { opacity: .45; cursor: default; }
+.promo-segment.small button { min-height: 32px; padding: 0 12px; font-size: 12px; }
+
+.promo-media { display: grid; gap: 12px; }
+.promo-media-spec { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--warn-rim); background: var(--warn-soft); color: var(--warn-ink); }
+.promo-media-spec svg { flex: 0 0 auto; margin-top: 2px; }
+.promo-media-spec p { margin: 0; font-size: 12.5px; line-height: 1.55; }
+.promo-media-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.promo-media-frame { position: relative; width: 100%; max-height: 360px; overflow: hidden; border-radius: 14px; border: 1px dashed var(--border-strong); background: repeating-conic-gradient(var(--surface-muted) 0% 25%, var(--surface) 0% 50%) 50% / 18px 18px; display: grid; place-items: center; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
+.promo-media-frame img, .promo-media-frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.promo-media-actions { display: grid; gap: 8px; justify-items: start; }
+
+.promo-fonts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.promo-fonts button { display: grid; gap: 2px; justify-items: start; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--ink); text-align: left; }
+.promo-fonts button span { font-size: 30px; line-height: 1.1; }
+.promo-fonts button strong { font-size: 13px; }
+.promo-fonts button small { font-size: 11px; color: var(--ink-soft); }
+.promo-fonts button.on { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(108,52,201,.15); }
+.promo-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.promo-accent span { font-size: 13px; font-weight: 600; margin-right: 4px; }
+.promo-accent button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); }
+.promo-accent button.on { box-shadow: 0 0 0 2px var(--ink); }
+.promo-accent input[type="color"], .promo-color input[type="color"] { width: 32px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: none; cursor: pointer; }
+
+.promo-blocks { display: grid; gap: 12px; }
+.promo-block { display: grid; gap: 10px; padding: 12px 14px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-muted); }
+.promo-block-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.promo-block-head > span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: var(--brand); text-transform: uppercase; letter-spacing: .05em; }
+.promo-block-head > div { display: flex; gap: 4px; }
+.promo-block-head .icon-button { width: 30px; height: 30px; }
+.promo-block-media { width: 100%; max-height: 260px; object-fit: contain; border-radius: 10px; background: #000; }
+audio.promo-block-media { background: transparent; max-height: none; }
+.promo-inline { display: flex; gap: 8px; align-items: center; }
+.promo-inline > select { width: auto !important; flex: 0 0 auto; }
+.promo-inline > input { flex: 1; }
+.promo-inline.small { justify-content: space-between; }
+.promo-toggle-pair { display: inline-flex; gap: 4px; }
+.promo-toggle-pair button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--ink-muted); }
+.promo-toggle-pair button.on { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
+.promo-hint { margin: 0; font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+.checkbox-line { display: flex !important; flex-direction: row; align-items: center; gap: 8px !important; font-size: 13px !important; font-weight: 600; margin: 0 !important; }
+.checkbox-line input { width: 16px; height: 16px; accent-color: var(--brand); }
+
+.promo-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: 14px; }
+.promo-add > span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: var(--ink-muted); margin-right: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.promo-add button { min-height: 34px; padding: 0 11px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 12.5px; font-weight: 700; }
+.promo-add button:hover { border-color: var(--brand); color: var(--brand); }
+
+.promo-rich { border: 1px solid var(--border); border-radius: 12px; background: var(--field); overflow: visible; position: relative; }
+.promo-rich textarea { border: 0 !important; border-radius: 0 0 12px 12px !important; background: transparent !important; box-shadow: none !important; }
+.promo-rich-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px; border-bottom: 1px solid var(--border); }
+.promo-rich-bar > button { width: 32px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--ink-muted); }
+.promo-rich-bar > button:hover, .promo-rich-bar > button.on { color: var(--brand); background: var(--brand-soft); }
+.promo-rich-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--border); }
+.promo-rich-palette { position: absolute; top: 40px; left: 140px; z-index: 4; display: flex; gap: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 12px 30px rgba(20,10,40,.16); }
+.promo-rich-palette button { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); }
+
+.promo-button-fields { display: grid; gap: 12px; }
+.promo-gradients { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.promo-gradients > button { width: 46px; height: 28px; border-radius: 999px; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); }
+.promo-gradients > button.on { box-shadow: 0 0 0 2px var(--ink); }
+.promo-color { display: inline-flex !important; flex-direction: row !important; align-items: center; gap: 6px !important; color: var(--ink-muted); }
+.promo-switches { display: grid; gap: 8px; }
+
+/* The phone */
+.promo-preview { position: sticky; top: 84px; display: grid; gap: 12px; justify-items: center; }
+.promo-preview-note { font-size: 11.5px; text-align: center; margin: 0; }
+.pp-phone { position: relative; width: 360px; height: 720px; overflow: hidden; border-radius: 44px; border: 10px solid #121018; background: #fff; color: #150E24; box-shadow: 0 30px 60px rgba(20,10,40,.25); font-family: "Manrope", sans-serif; }
+.pp-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pp-media-empty { display: grid; place-items: center; background: linear-gradient(135deg, #563BD0, #251068); color: rgba(255,255,255,.7); font-size: 12px; font-weight: 700; }
+.pp-home { padding: 56px 18px 18px; display: grid; gap: 12px; }
+.pp-home-head { display: flex; align-items: center; gap: 8px; font: 800 17px "Manrope", sans-serif; }
+.pp-banner { position: relative; overflow: hidden; border-radius: 24px; background: #1B0D45; }
+.pp-banner-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,4,26,0) 0%, rgba(10,4,26,.15) 35%, rgba(10,4,26,.78) 100%); }
+.pp-ad-chip { position: absolute; top: 9px; left: 9px; display: inline-flex; align-items: center; gap: 4px; max-width: 70%; padding: 3px 8px; border-radius: 999px; background: #F6C453; color: #3A2304; font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-ad-chip.quiet { top: 7px; left: 7px; padding: 2px 6px; font-size: 7.5px; background: rgba(10,4,26,.45); color: rgba(255,255,255,.9); }
+.promo-banner-style { display: grid; gap: 8px; }
+.promo-banner-style > span { font-size: 13px; font-weight: 600; }
+.pp-banner-copy { position: absolute; left: 13px; right: 11px; bottom: 10px; display: flex; align-items: flex-end; gap: 10px; color: #fff; }
+.pp-banner-copy > div { flex: 1; min-width: 0; display: grid; }
+.pp-banner-copy strong { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-banner-copy span { font-size: 11px; opacity: .82; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-banner-copy i { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.32); }
+.pp-dots { display: flex; justify-content: center; gap: 5px; }
+.pp-dots i { width: 6px; height: 6px; border-radius: 3px; background: #D9D3E8; }
+.pp-dots i.on { width: 18px; background: #6C34C9; }
+.pp-note { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: #F4F0FB; color: #5A5370; font-size: 11.5px; line-height: 1.5; }
+.pp-scroll { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; }
+.pp-scroll::-webkit-scrollbar { display: none; }
+.pp-hero { position: sticky; top: 0; height: 370px; overflow: hidden; background: #140A33; }
+.pp-hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,4,20,.5) 0%, rgba(8,4,20,0) 25%, rgba(8,4,20,0) 70%, rgba(8,4,20,.35) 100%); }
+.pp-back { position: absolute; top: 46px; left: 14px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: rgba(10,4,26,.38); border: 1px solid rgba(255,255,255,.28); }
+.pp-sheet { position: relative; z-index: 1; margin-top: -30px; min-height: 420px; padding: 10px 20px 110px; border-radius: 28px 28px 0 0; background: #fff; box-shadow: 0 -8px 24px rgba(11,4,32,.18); }
+.pp-grip { display: block; width: 36px; height: 4px; margin: 0 auto 12px; border-radius: 2px; background: #D9D3E8; }
+.pp-kind { display: flex; align-items: center; gap: 8px; }
+.pp-kind > span { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: #F0E9FC; color: #6C34C9; font: 800 9.5px "Manrope", sans-serif; letter-spacing: .08em; }
+.pp-kind > span.ad { background: #FDF0D5; color: #9A5B06; }
+.pp-kind em { font: 600 12px "Manrope", sans-serif; font-style: normal; color: #6E6880; }
+.pp-sheet h2 { margin: 10px 0 0; font-size: 28px; line-height: 1.2; letter-spacing: -.01em; }
+.pp-subtitle { margin: 8px 0 0; font: 500 14px/1.55 "Manrope", sans-serif; color: #6E6880; }
+.pp-rule { display: block; width: 40px; height: 4px; margin: 14px 0; border-radius: 2px; }
+.pp-body { display: grid; gap: 16px; }
+.pp-empty { color: #918BA3; font: 500 13px/1.5 "Manrope", sans-serif; }
+.pp-h1 { margin: 6px 0 0; font-size: 24px; line-height: 1.25; }
+.pp-h2 { margin: 2px 0 0; font-size: 19px; line-height: 1.3; }
+.pp-text { margin: 0; font-size: 15px; line-height: 1.65; color: #150E24; white-space: pre-wrap; }
+.pp-text.large { font-size: 17.5px; }
+.pp-quote { margin: 0; padding: 2px 0 2px 14px; border-left: 3px solid; }
+.pp-quote-mark { display: block; font-size: 52px; line-height: .6; margin-top: 10px; opacity: .4; }
+.pp-quote p { margin: 0; font-size: 18px; line-height: 1.5; font-style: italic; }
+.pp-quote cite { display: block; margin-top: 6px; font: 600 12px "Manrope", sans-serif; font-style: normal; color: #6E6880; }
+.pp-callout { padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); border-left: 4px solid var(--tone); background: color-mix(in srgb, var(--tone) 11%, white); }
+.pp-callout p { margin: 0; font-size: 14px; line-height: 1.6; }
+.pp-figure { margin: 0; display: grid; gap: 6px; }
+.pp-figure img, .pp-figure video { width: 100%; border-radius: 14px; display: block; background: #000; }
+.pp-figure figcaption { text-align: center; font: 500 11px/1.5 "Manrope", sans-serif; color: #918BA3; }
+.pp-audio { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #E4E1EC; border-radius: 14px; }
+.pp-audio-play { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; color: #fff; }
+.pp-audio > div { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.pp-audio strong { font: 700 13px "Manrope", sans-serif; }
+.pp-audio audio { width: 100%; height: 28px; }
+.pp-list { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15px; line-height: 1.6; }
+.pp-list li::marker { color: var(--accent); font-weight: 700; }
+.pp-divider { display: flex; align-items: center; gap: 10px; }
+.pp-divider span { flex: 1; height: 1px; background: #E4E1EC; }
+.pp-divider i { width: 7px; height: 7px; transform: rotate(45deg); border-radius: 2px; }
+.pp-dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: grid; gap: 8px; padding: 26px 18px 18px; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 45%); }
+.pp-button-wrap { position: relative; }
+.pp-button-wrap.glow::before { content: ""; position: absolute; inset: 5px 8px; border-radius: 999px; background: var(--glow); filter: blur(14px); opacity: .55; animation: pp-glow 2.8s ease-in-out infinite; }
+.pp-button { position: relative; overflow: hidden; min-height: 48px; padding: 0 20px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; font: 800 14px "Manrope", sans-serif; }
+.pp-button.sheen::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; transform: skewX(-20deg); background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.45), rgba(255,255,255,0)); animation: pp-sheen 3.4s ease-in-out infinite; }
+@keyframes pp-glow { 0%, 100% { opacity: .3; transform: scale(1); } 50% { opacity: .75; transform: scale(1.04, 1.18); } }
+@keyframes pp-sheen { 0% { left: -40%; } 47%, 100% { left: 110%; } }
+@media (prefers-reduced-motion: reduce) { .pp-button-wrap.glow::before, .pp-button.sheen::after { animation: none; } }
+
+@media (max-width: 1240px) {
+  .promo-layout { grid-template-columns: 1fr; }
+  .promo-preview { position: static; }
+}
+@media (max-width: 820px) {
+  .promo-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .promo-editor-bar { flex-wrap: wrap; top: 60px; }
+  .promo-media-row { grid-template-columns: 1fr; }
+  .promo-fonts { grid-template-columns: 1fr; }
+  .pp-phone { width: 320px; height: 640px; }
+}
+
+/* Taqdimot reklamasi */
+.ads-section { display: grid; gap: 16px; }
+.ads-section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.ads-section-head h2 { margin: 0 0 6px; font-size: 18px; }
+.ads-section-head .muted { margin: 0; max-width: 760px; font-size: 13.5px; }
+.ads-size { margin: 8px 0 0; font-size: 13px; font-weight: 600; color: var(--ink-muted); }
+.ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.ads-grid.wide { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.ads-card { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.ads-card.is-off .ads-frame { opacity: .45; }
+.ads-frame { aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
+.ads-frame.banner { aspect-ratio: 7 / 1; }
+.ads-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ads-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .ads-section-head { flex-direction: column; }
+  .ads-grid.wide { grid-template-columns: 1fr; }
+}
+
+/* Hammaga xabar: how a broadcast lands on a lock screen. */
+.broadcast-preview { margin-top: 18px; max-width: 380px; padding: 12px 14px; border-radius: 16px; background: var(--surface-muted, #f4f1fb); border: 1px solid var(--border); display: grid; gap: 4px; }
+.broadcast-preview strong { font-size: 15px; }
+.broadcast-preview p { margin: 0; color: var(--muted, #6b6680); font-size: 14px; }
+.broadcast-app { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .06em; color: var(--muted, #6b6680); font-weight: 700; }

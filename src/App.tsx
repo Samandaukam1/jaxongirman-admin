@@ -25,6 +25,10 @@ import { ModulesPage } from "@/pages/ModulesPage";
 import { OrdersPage } from "@/pages/OrdersPage";
 import { MarathonPage } from "@/pages/MarathonPage";
 import { PricingPage } from "@/pages/PricingPage";
+import { PromosPage } from "@/pages/PromosPage";
+import { PresentationAdsPage } from "@/pages/PresentationAdsPage";
+import { BroadcastPage } from "@/pages/BroadcastPage";
+import { ChatReportsPage } from "@/pages/ChatReportsPage";
 import { EconomyPage } from "@/pages/EconomyPage";
 import { SupportPage } from "@/pages/SupportPage";
 import { QrVideoPage } from "@/pages/QrVideoPage";
@@ -38,6 +42,10 @@ import { useAuth } from "@/providers/AuthProvider";
 
 const pages: Record<string, ReactNode> = {
   "/": <DashboardPage />,
+  "/tavsiyalar": <PromosPage />,
+  "/taqdimot-reklama": <PresentationAdsPage />,
+  "/xabar-yuborish": <BroadcastPage />,
+  "/chat-shikoyatlari": <ChatReportsPage />,
   "/users": <UsersPage />,
   "/presentations": <PresentationsPage />,
   "/jslayd": <JslaydDesignsPage />,
