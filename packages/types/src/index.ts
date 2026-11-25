@@ -2,7 +2,10 @@ import type { Json } from "./database.generated";
 
 export * from "./avatars";
 export * from "./payment-cards";
+export * from "./crossword";
+export * from "./presentation-ads";
 export * from "./presenting";
+export * from "./promo";
 
 /**
  * Account roles, ordered from least to most privileged. `super_admin` is a
@@ -439,6 +442,8 @@ export interface MarketplaceListItem {
   material_label: string | null;
   category_id: string | null;
   base_price: number;
+  /** The listing's optional second price in J Tanga; absent from servers before coin sales, null when not sold for coins. */
+  coin_price?: number | null;
   currency: string;
   cover_path: string | null;
   content_units: number | null;
@@ -492,7 +497,9 @@ export const SETTLEMENT_STATUS_LABELS: Record<string, string> = {
 export type GameQuestionType =
   | "single_choice" | "true_false" | "multiple_choice" | "ordering"
   | "matching" | "fill_blank" | "word_cloud" | "poll"
-  | "open_answer" | "image_quiz" | "hotspot";
+  | "open_answer" | "image_quiz" | "hotspot"
+  /** A whole crossword in one question: a game of kind "crossword". Never added to a quiz. */
+  | "crossword";
 
 export const GAME_QUESTION_TYPES: readonly GameQuestionType[] = [
   "single_choice", "true_false", "multiple_choice", "ordering", "matching",
@@ -511,6 +518,7 @@ export const GAME_TYPE_LABELS: Record<GameQuestionType, string> = {
   open_answer: "Erkin javob",
   image_quiz: "Rasmni toping",
   hotspot: "Rasmdan joyni toping",
+  crossword: "Krossvord",
 };
 
 /** The types the AI can author with text alone; the other two need a picture. */

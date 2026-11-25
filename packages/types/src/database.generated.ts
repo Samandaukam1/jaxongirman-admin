@@ -15,6 +15,8 @@ export type Database = {
           brief: string
           citations: Json
           created_at: string
+          edited_at: string | null
+          figures: Json
           heading: string
           id: string
           key: string
@@ -30,6 +32,8 @@ export type Database = {
           brief?: string
           citations?: Json
           created_at?: string
+          edited_at?: string | null
+          figures?: Json
           heading: string
           id?: string
           key: string
@@ -45,6 +49,8 @@ export type Database = {
           brief?: string
           citations?: Json
           created_at?: string
+          edited_at?: string | null
+          figures?: Json
           heading?: string
           id?: string
           key?: string
@@ -67,54 +73,78 @@ export type Database = {
       }
       academic_works: {
         Row: {
+          acknowledgements: string
+          authors: Json
+          citation_style: string
           created_at: string
           empirical: boolean
           estimated_credits: number
           failure_reason: string | null
           field: string
+          funding: string
           id: string
           kind: string
+          language: string
+          layout: Json
           owner_id: string
           paused_reason: string | null
           requirements: string
           sources: Json
           spent_credits: number
           status: string
+          structure: string | null
           topic: string
+          udc: string
           updated_at: string
         }
         Insert: {
+          acknowledgements?: string
+          authors?: Json
+          citation_style?: string
           created_at?: string
           empirical?: boolean
           estimated_credits?: number
           failure_reason?: string | null
           field?: string
+          funding?: string
           id?: string
           kind: string
+          language?: string
+          layout?: Json
           owner_id: string
           paused_reason?: string | null
           requirements?: string
           sources?: Json
           spent_credits?: number
           status?: string
+          structure?: string | null
           topic: string
+          udc?: string
           updated_at?: string
         }
         Update: {
+          acknowledgements?: string
+          authors?: Json
+          citation_style?: string
           created_at?: string
           empirical?: boolean
           estimated_credits?: number
           failure_reason?: string | null
           field?: string
+          funding?: string
           id?: string
           kind?: string
+          language?: string
+          layout?: Json
           owner_id?: string
           paused_reason?: string | null
           requirements?: string
           sources?: Json
           spent_credits?: number
           status?: string
+          structure?: string | null
           topic?: string
+          udc?: string
           updated_at?: string
         }
         Relationships: []
@@ -278,6 +308,324 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_blocks: {
+        Row: {
+          blocked_id: string
+          created_at: string
+          owner_id: string
+        }
+        Insert: {
+          blocked_id: string
+          created_at?: string
+          owner_id: string
+        }
+        Update: {
+          blocked_id?: string
+          created_at?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      chat_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          display_name: string | null
+          muted: boolean
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          display_name?: string | null
+          muted?: boolean
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          display_name?: string | null
+          muted?: boolean
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          direct_key: string | null
+          id: string
+          last_message_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          direct_key?: string | null
+          id?: string
+          last_message_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          direct_key?: string | null
+          id?: string
+          last_message_at?: string | null
+        }
+        Relationships: []
+      }
+      chat_hidden: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_hidden_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_library_copies: {
+        Row: {
+          created_at: string
+          item_id: string
+          kind: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          kind: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          kind?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_library_copies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_members: {
+        Row: {
+          cleared_at: string | null
+          conversation_id: string
+          joined_at: string
+          last_read_at: string
+          protect_history: boolean
+          user_id: string
+        }
+        Insert: {
+          cleared_at?: string | null
+          conversation_id: string
+          joined_at?: string
+          last_read_at?: string
+          protect_history?: boolean
+          user_id: string
+        }
+        Update: {
+          cleared_at?: string | null
+          conversation_id?: string
+          joined_at?: string
+          last_read_at?: string
+          protect_history?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          body: string
+          client_id: string | null
+          conversation_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          forward_from_id: string | null
+          forward_from_name: string | null
+          id: string
+          items: Json | null
+          kind: string
+          media: Json
+          media_path: string | null
+          pinned_at: string | null
+          pinned_by: string | null
+          reactions: Json
+          reply_to_id: string | null
+          sender_id: string | null
+          share: Json | null
+        }
+        Insert: {
+          body?: string
+          client_id?: string | null
+          conversation_id: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          forward_from_id?: string | null
+          forward_from_name?: string | null
+          id?: string
+          items?: Json | null
+          kind: string
+          media?: Json
+          media_path?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          reactions?: Json
+          reply_to_id?: string | null
+          sender_id?: string | null
+          share?: Json | null
+        }
+        Update: {
+          body?: string
+          client_id?: string | null
+          conversation_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          forward_from_id?: string | null
+          forward_from_name?: string | null
+          id?: string
+          items?: Json | null
+          kind?: string
+          media?: Json
+          media_path?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          reactions?: Json
+          reply_to_id?: string | null
+          sender_id?: string | null
+          share?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_presence: {
+        Row: {
+          last_seen_at: string
+          online: boolean
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          online?: boolean
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          online?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_reports: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          message_id: string | null
+          note: string | null
+          reason: string
+          reported_id: string | null
+          reporter_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          message_id?: string | null
+          note?: string | null
+          reason: string
+          reported_id?: string | null
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          message_id?: string | null
+          note?: string | null
+          reason?: string
+          reported_id?: string | null
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reports_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_lots: {
         Row: {
           burned: number
@@ -409,6 +757,66 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      coin_platform_fees: {
+        Row: {
+          amount: number
+          coin_purchase_id: string | null
+          created_at: string
+          credit_transaction_id: string | null
+          fee_min: number
+          fee_percent: number
+          from_user_id: string | null
+          gross_amount: number
+          id: string
+          idempotency_key: string
+          source: string
+          to_user_id: string | null
+        }
+        Insert: {
+          amount: number
+          coin_purchase_id?: string | null
+          created_at?: string
+          credit_transaction_id?: string | null
+          fee_min?: number
+          fee_percent: number
+          from_user_id?: string | null
+          gross_amount: number
+          id?: string
+          idempotency_key: string
+          source: string
+          to_user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          coin_purchase_id?: string | null
+          created_at?: string
+          credit_transaction_id?: string | null
+          fee_min?: number
+          fee_percent?: number
+          from_user_id?: string | null
+          gross_amount?: number
+          id?: string
+          idempotency_key?: string
+          source?: string
+          to_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_platform_fees_coin_purchase_id_fkey"
+            columns: ["coin_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_coin_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_platform_fees_credit_transaction_id_fkey"
+            columns: ["credit_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "credit_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commission_config: {
         Row: {
@@ -1133,6 +1541,47 @@ export type Database = {
           },
         ]
       }
+      game_mafia_cards: {
+        Row: {
+          alive: boolean
+          dealt_at: string
+          out_reason: string | null
+          out_round: number | null
+          player_id: string
+          role: string
+          seen_at: string | null
+          session_id: string
+        }
+        Insert: {
+          alive?: boolean
+          dealt_at?: string
+          out_reason?: string | null
+          out_round?: number | null
+          player_id: string
+          role: string
+          seen_at?: string | null
+          session_id: string
+        }
+        Update: {
+          alive?: boolean
+          dealt_at?: string
+          out_reason?: string | null
+          out_round?: number | null
+          player_id?: string
+          role?: string
+          seen_at?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_mafia_cards_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "game_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_pairing_tokens: {
         Row: {
           consumed_at: string | null
@@ -1282,16 +1731,19 @@ export type Database = {
       }
       game_sessions: {
         Row: {
+          allow_late_join: boolean
           created_at: string
           current_index: number
           ended_at: string | null
           expires_at: string
           game_id: string | null
+          grid: Json | null
           host_user_id: string | null
           id: string
           join_code: string
           join_token: string
           last_advance_at: string | null
+          mafia: Json | null
           phase_deadline: string | null
           player_count: number
           question_ids: string[]
@@ -1310,16 +1762,19 @@ export type Database = {
           teams: Json
         }
         Insert: {
+          allow_late_join?: boolean
           created_at?: string
           current_index?: number
           ended_at?: string | null
           expires_at?: string
           game_id?: string | null
+          grid?: Json | null
           host_user_id?: string | null
           id?: string
           join_code: string
           join_token: string
           last_advance_at?: string | null
+          mafia?: Json | null
           phase_deadline?: string | null
           player_count?: number
           question_ids?: string[]
@@ -1338,16 +1793,19 @@ export type Database = {
           teams?: Json
         }
         Update: {
+          allow_late_join?: boolean
           created_at?: string
           current_index?: number
           ended_at?: string | null
           expires_at?: string
           game_id?: string | null
+          grid?: Json | null
           host_user_id?: string | null
           id?: string
           join_code?: string
           join_token?: string
           last_advance_at?: string | null
+          mafia?: Json | null
           phase_deadline?: string | null
           player_count?: number
           question_ids?: string[]
@@ -1389,6 +1847,7 @@ export type Database = {
           featured_at: string | null
           id: string
           is_free: boolean
+          kind: string
           language: string
           owner_id: string
           question_count: number
@@ -1396,6 +1855,8 @@ export type Database = {
           source_presentation_id: string | null
           source_type: Database["public"]["Enums"]["game_source"]
           status: Database["public"]["Enums"]["game_status"]
+          store_autopublish: string
+          store_autopublish_at: string | null
           title: string
           updated_at: string
         }
@@ -1412,6 +1873,7 @@ export type Database = {
           featured_at?: string | null
           id?: string
           is_free?: boolean
+          kind?: string
           language?: string
           owner_id: string
           question_count?: number
@@ -1419,6 +1881,8 @@ export type Database = {
           source_presentation_id?: string | null
           source_type?: Database["public"]["Enums"]["game_source"]
           status?: Database["public"]["Enums"]["game_status"]
+          store_autopublish?: string
+          store_autopublish_at?: string | null
           title?: string
           updated_at?: string
         }
@@ -1435,6 +1899,7 @@ export type Database = {
           featured_at?: string | null
           id?: string
           is_free?: boolean
+          kind?: string
           language?: string
           owner_id?: string
           question_count?: number
@@ -1442,6 +1907,8 @@ export type Database = {
           source_presentation_id?: string | null
           source_type?: Database["public"]["Enums"]["game_source"]
           status?: Database["public"]["Enums"]["game_status"]
+          store_autopublish?: string
+          store_autopublish_at?: string | null
           title?: string
           updated_at?: string
         }
@@ -2320,6 +2787,79 @@ export type Database = {
           },
         ]
       }
+      marketplace_coin_purchases: {
+        Row: {
+          buyer_id: string
+          buyer_transaction_id: string
+          fee_amount: number
+          fee_min: number
+          fee_percent: number
+          id: string
+          idempotency_key: string
+          price: number
+          product_id: string
+          purchased_at: string
+          refund_ack: Json
+          seller_id: string
+          seller_net: number
+          seller_transaction_id: string | null
+        }
+        Insert: {
+          buyer_id: string
+          buyer_transaction_id: string
+          fee_amount: number
+          fee_min?: number
+          fee_percent: number
+          id?: string
+          idempotency_key: string
+          price: number
+          product_id: string
+          purchased_at?: string
+          refund_ack?: Json
+          seller_id: string
+          seller_net: number
+          seller_transaction_id?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          buyer_transaction_id?: string
+          fee_amount?: number
+          fee_min?: number
+          fee_percent?: number
+          id?: string
+          idempotency_key?: string
+          price?: number
+          product_id?: string
+          purchased_at?: string
+          refund_ack?: Json
+          seller_id?: string
+          seller_net?: number
+          seller_transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_coin_purchases_buyer_transaction_id_fkey"
+            columns: ["buyer_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "credit_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_coin_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_coin_purchases_seller_transaction_id_fkey"
+            columns: ["seller_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "credit_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_favorites: {
         Row: {
           created_at: string
@@ -2530,6 +3070,7 @@ export type Database = {
           approval_source: string | null
           base_price: number
           category_id: string | null
+          coin_price: number | null
           content_units: number | null
           cover_path: string | null
           created_at: string
@@ -2561,6 +3102,7 @@ export type Database = {
           approval_source?: string | null
           base_price: number
           category_id?: string | null
+          coin_price?: number | null
           content_units?: number | null
           cover_path?: string | null
           created_at?: string
@@ -2592,6 +3134,7 @@ export type Database = {
           approval_source?: string | null
           base_price?: number
           category_id?: string | null
+          coin_price?: number | null
           content_units?: number | null
           cover_path?: string | null
           created_at?: string
@@ -3400,6 +3943,42 @@ export type Database = {
         }
         Relationships: []
       }
+      presentation_ads: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          image_path: string
+          kind: string
+          link_url: string | null
+          position: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_path: string
+          kind: string
+          link_url?: string | null
+          position?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_path?: string
+          kind?: string
+          link_url?: string | null
+          position?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       presentation_assets: {
         Row: {
           alt_text: string | null
@@ -3588,6 +4167,8 @@ export type Database = {
           failure_reason: string | null
           introduction: string
           owner_id: string
+          pdf_path: string | null
+          pdf_rendered_at: string | null
           presentation_id: string
           sections: Json
           status: string
@@ -3600,6 +4181,8 @@ export type Database = {
           failure_reason?: string | null
           introduction?: string
           owner_id: string
+          pdf_path?: string | null
+          pdf_rendered_at?: string | null
           presentation_id: string
           sections?: Json
           status?: string
@@ -3612,6 +4195,8 @@ export type Database = {
           failure_reason?: string | null
           introduction?: string
           owner_id?: string
+          pdf_path?: string | null
+          pdf_rendered_at?: string | null
           presentation_id?: string
           sections?: Json
           status?: string
@@ -4264,32 +4849,126 @@ export type Database = {
         }
         Relationships: []
       }
+      promos: {
+        Row: {
+          action: string
+          badge: string | null
+          banner_kind: string
+          banner_style: string
+          banner_url: string | null
+          body: Json
+          click_count: number
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          hero_kind: string
+          hero_url: string | null
+          id: string
+          kind: string
+          link_url: string | null
+          position: number
+          sponsor: string
+          starts_at: string | null
+          status: string
+          subtitle: string
+          theme: Json
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          action?: string
+          badge?: string | null
+          banner_kind?: string
+          banner_style?: string
+          banner_url?: string | null
+          body?: Json
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          hero_kind?: string
+          hero_url?: string | null
+          id?: string
+          kind?: string
+          link_url?: string | null
+          position?: number
+          sponsor?: string
+          starts_at?: string | null
+          status?: string
+          subtitle?: string
+          theme?: Json
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          action?: string
+          badge?: string | null
+          banner_kind?: string
+          banner_style?: string
+          banner_url?: string | null
+          body?: Json
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          hero_kind?: string
+          hero_url?: string | null
+          id?: string
+          kind?: string
+          link_url?: string | null
+          position?: number
+          sponsor?: string
+          starts_at?: string | null
+          status?: string
+          subtitle?: string
+          theme?: Json
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       purchase_entitlements: {
         Row: {
+          coin_purchase_id: string | null
           granted_at: string
           id: string
           product_id: string
-          purchase_id: string
+          purchase_id: string | null
           revoked_at: string | null
+          source: string
           user_id: string
         }
         Insert: {
+          coin_purchase_id?: string | null
           granted_at?: string
           id?: string
           product_id: string
-          purchase_id: string
+          purchase_id?: string | null
           revoked_at?: string | null
+          source?: string
           user_id: string
         }
         Update: {
+          coin_purchase_id?: string | null
           granted_at?: string
           id?: string
           product_id?: string
-          purchase_id?: string
+          purchase_id?: string | null
           revoked_at?: string | null
+          source?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_entitlements_coin_purchase_id_fkey"
+            columns: ["coin_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_coin_purchases"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_entitlements_product_id_fkey"
             columns: ["product_id"]
@@ -4305,6 +4984,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_outbox: {
+        Row: {
+          attempts: number
+          body: string
+          channel: string
+          claimed_at: string | null
+          created_at: string
+          data: Json
+          error: string | null
+          id: number
+          sent_at: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          body?: string
+          channel?: string
+          claimed_at?: string | null
+          created_at?: string
+          data?: Json
+          error?: string | null
+          id?: never
+          sent_at?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          body?: string
+          channel?: string
+          claimed_at?: string | null
+          created_at?: string
+          data?: Json
+          error?: string | null
+          id?: never
+          sent_at?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_tokens: {
+        Row: {
+          created_at: string
+          device_name: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_name?: string
+          platform: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       qr_video_experiences: {
         Row: {
@@ -4602,6 +5353,136 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_page_drafts: {
+        Row: {
+          base_version: number
+          body: string
+          body_i18n: Json
+          saved_at: string
+          saved_by: string | null
+          slug: string
+          title: string
+          title_i18n: Json
+        }
+        Insert: {
+          base_version: number
+          body?: string
+          body_i18n?: Json
+          saved_at?: string
+          saved_by?: string | null
+          slug: string
+          title?: string
+          title_i18n?: Json
+        }
+        Update: {
+          base_version?: number
+          body?: string
+          body_i18n?: Json
+          saved_at?: string
+          saved_by?: string | null
+          slug?: string
+          title?: string
+          title_i18n?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_page_drafts_slug_fkey"
+            columns: ["slug"]
+            isOneToOne: true
+            referencedRelation: "site_pages"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      site_page_versions: {
+        Row: {
+          body: string
+          body_i18n: Json
+          id: number
+          published_at: string
+          published_by: string | null
+          reason: string | null
+          reverted_from: number | null
+          slug: string
+          title: string
+          title_i18n: Json
+          version: number
+        }
+        Insert: {
+          body: string
+          body_i18n?: Json
+          id?: number
+          published_at?: string
+          published_by?: string | null
+          reason?: string | null
+          reverted_from?: number | null
+          slug: string
+          title: string
+          title_i18n?: Json
+          version: number
+        }
+        Update: {
+          body?: string
+          body_i18n?: Json
+          id?: number
+          published_at?: string
+          published_by?: string | null
+          reason?: string | null
+          reverted_from?: number | null
+          slug?: string
+          title?: string
+          title_i18n?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_page_versions_slug_fkey"
+            columns: ["slug"]
+            isOneToOne: false
+            referencedRelation: "site_pages"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      site_pages: {
+        Row: {
+          body: string
+          body_i18n: Json
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          title_i18n: Json
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          body?: string
+          body_i18n?: Json
+          published_at?: string | null
+          slug: string
+          status?: string
+          title?: string
+          title_i18n?: Json
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          body?: string
+          body_i18n?: Json
+          published_at?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          title_i18n?: Json
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
       }
       slide_elements: {
         Row: {
@@ -5814,6 +6695,168 @@ export type Database = {
         }
         Relationships: []
       }
+      test_questions: {
+        Row: {
+          correct: number
+          created_at: string
+          explanation: string
+          id: string
+          options: Json
+          owner_id: string
+          position: number
+          prompt: string
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          correct?: number
+          created_at?: string
+          explanation?: string
+          id?: string
+          options?: Json
+          owner_id: string
+          position: number
+          prompt?: string
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          correct?: number
+          created_at?: string
+          explanation?: string
+          id?: string
+          options?: Json
+          owner_id?: string
+          position?: number
+          prompt?: string
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_questions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_results: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          owner_id: string
+          score: number
+          source: string
+          student_name: string
+          test_id: string
+          total: number
+        }
+        Insert: {
+          answers: Json
+          created_at?: string
+          id?: string
+          owner_id: string
+          score: number
+          source?: string
+          student_name?: string
+          test_id: string
+          total: number
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          owner_id?: string
+          score?: number
+          source?: string
+          student_name?: string
+          test_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_results_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tests: {
+        Row: {
+          audience: string
+          created_at: string
+          description: string
+          difficulty: string
+          failure_code: string | null
+          failure_detail: string | null
+          failure_reason: string | null
+          id: string
+          language: string
+          option_count: number
+          owner_id: string
+          print_layout: string
+          question_count: number
+          source_presentation_id: string | null
+          source_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          failure_code?: string | null
+          failure_detail?: string | null
+          failure_reason?: string | null
+          id?: string
+          language?: string
+          option_count?: number
+          owner_id: string
+          print_layout?: string
+          question_count?: number
+          source_presentation_id?: string | null
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          failure_code?: string | null
+          failure_detail?: string | null
+          failure_reason?: string | null
+          id?: string
+          language?: string
+          option_count?: number
+          owner_id?: string
+          print_layout?: string
+          question_count?: number
+          source_presentation_id?: string | null
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tests_source_presentation_id_fkey"
+            columns: ["source_presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_devices: {
         Row: {
           app_version: string | null
@@ -6065,6 +7108,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      academic_own_section: {
+        Args: { p_section_id: string }
+        Returns: {
+          body: string
+          brief: string
+          citations: Json
+          created_at: string
+          edited_at: string | null
+          figures: Json
+          heading: string
+          id: string
+          key: string
+          owner_id: string
+          position: number
+          status: string
+          updated_at: string
+          words: number
+          work_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "academic_sections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      academic_section_edit: {
+        Args: { p_body: string; p_heading: string; p_section_id: string }
+        Returns: Json
+      }
+      academic_section_figures: {
+        Args: { p_figures: Json; p_section_id: string }
+        Returns: Json
+      }
       account_retention_reasons: { Args: { p_user: string }; Returns: string[] }
       admin_adjust_credits: {
         Args: {
@@ -6129,6 +7206,24 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_broadcast: {
+        Args: {
+          p_body: string
+          p_deep_link?: string
+          p_language?: string
+          p_title: string
+        }
+        Returns: number
+      }
+      admin_chat_report_close: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
+      }
+      admin_chat_reports: {
+        Args: { p_limit?: number; p_status?: string }
+        Returns: Json
+      }
+      admin_coin_economy: { Args: never; Returns: Json }
       admin_create_settlement: {
         Args: {
           p_period_end: string
@@ -6180,6 +7275,10 @@ export type Database = {
       admin_delete_jelement_family: {
         Args: { p_family_id: string }
         Returns: string[]
+      }
+      admin_delete_presentation_ad: {
+        Args: { p_id: string; p_reason?: string }
+        Returns: undefined
       }
       admin_duplicate_design: {
         Args: { p_design_id: string; p_name: string; p_slug: string }
@@ -6443,6 +7542,7 @@ export type Database = {
           reserved_credits: number
           status: Database["public"]["Enums"]["user_status"]
           user_id: string
+          username: string
         }[]
       }
       admin_listing_provenance: {
@@ -6498,6 +7598,7 @@ export type Database = {
           approval_source: string | null
           base_price: number
           category_id: string | null
+          coin_price: number | null
           content_units: number | null
           cover_path: string | null
           created_at: string
@@ -6568,6 +7669,18 @@ export type Database = {
       admin_publish_jelement_family: {
         Args: { p_family_id: string }
         Returns: number
+      }
+      admin_publish_site_page: {
+        Args: {
+          p_base_version?: number
+          p_body: string
+          p_body_i18n?: Json
+          p_reason?: string
+          p_slug: string
+          p_title: string
+          p_title_i18n?: Json
+        }
+        Returns: Json
       }
       admin_reclaim_credits: {
         Args: {
@@ -6657,6 +7770,10 @@ export type Database = {
       admin_restore_design: {
         Args: { p_design_id: string }
         Returns: undefined
+      }
+      admin_revert_site_page: {
+        Args: { p_reason?: string; p_slug: string; p_version: number }
+        Returns: Json
       }
       admin_revoke_module_access: {
         Args: { p_module_code: string; p_reason?: string; p_user_id: string }
@@ -6823,6 +7940,34 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_save_presentation_ad: {
+        Args: {
+          p_active?: boolean
+          p_id: string
+          p_image_path: string
+          p_kind: string
+          p_link_url?: string
+          p_position?: number
+          p_reason?: string
+        }
+        Returns: {
+          active: boolean
+          created_at: string
+          id: string
+          image_path: string
+          kind: string
+          link_url: string | null
+          position: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "presentation_ads"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_save_qr_video_experience: {
         Args: {
           p_glow?: number
@@ -6862,6 +8007,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_save_site_page: {
+        Args: {
+          p_body: string
+          p_body_i18n?: Json
+          p_reason?: string
+          p_slug: string
+          p_title: string
+          p_title_i18n?: Json
+        }
+        Returns: Json
       }
       admin_save_subscription_plan: {
         Args: {
@@ -6919,6 +8075,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_set_coin_fees: {
+        Args: {
+          p_reason: string
+          p_store_enabled: boolean
+          p_store_fee_min: number
+          p_store_fee_percent: number
+          p_transfer_fee_min: number
+          p_transfer_fee_percent: number
+        }
+        Returns: Json
       }
       admin_set_commission: {
         Args: {
@@ -6989,6 +8156,10 @@ export type Database = {
           p_max_amount?: number
           p_reason?: string
         }
+        Returns: Json
+      }
+      admin_set_site_contacts: {
+        Args: { p_contacts: Json; p_reason?: string }
         Returns: Json
       }
       admin_set_student_marathon: {
@@ -7085,6 +8256,8 @@ export type Database = {
         Args: { p_reason?: string; p_seller_id: string }
         Returns: Json
       }
+      admin_site_page_versions: { Args: { p_slug: string }; Returns: Json }
+      admin_site_pages: { Args: never; Returns: Json }
       admin_subscription_overview: { Args: never; Returns: Json }
       admin_terminate_game_session: {
         Args: { p_reason: string; p_session_id: string }
@@ -7260,11 +8433,179 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      chat_block: { Args: { p_user: string }; Returns: undefined }
+      chat_blocked_between: {
+        Args: { p_a: string; p_b: string }
+        Returns: boolean
+      }
+      chat_clear: {
+        Args: { p_conversation_id: string; p_for_everyone?: boolean }
+        Returns: undefined
+      }
+      chat_delete: {
+        Args: { p_for_everyone?: boolean; p_message_ids: string[] }
+        Returns: number
+      }
+      chat_edit: {
+        Args: { p_body: string; p_message_id: string }
+        Returns: {
+          body: string
+          client_id: string | null
+          conversation_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          forward_from_id: string | null
+          forward_from_name: string | null
+          id: string
+          items: Json | null
+          kind: string
+          media: Json
+          media_path: string | null
+          pinned_at: string | null
+          pinned_by: string | null
+          reactions: Json
+          reply_to_id: string | null
+          sender_id: string | null
+          share: Json | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      chat_forward: {
+        Args: { p_conversation_ids: string[]; p_message_ids: string[] }
+        Returns: number
+      }
+      chat_is_member: { Args: { p_conversation_id: string }; Returns: boolean }
+      chat_library_copy: {
+        Args: { p_message_id: string; p_user: string }
+        Returns: Json
+      }
+      chat_library_path: {
+        Args: { p_from: string; p_path: string; p_to: string }
+        Returns: string
+      }
+      chat_list: { Args: never; Returns: Json }
+      chat_mark_read: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
+      chat_media_visible: { Args: { p_path: string }; Returns: boolean }
+      chat_message_visible: {
+        Args: {
+          p_conversation_id: string
+          p_created_at: string
+          p_message_id: string
+        }
+        Returns: boolean
+      }
+      chat_open_direct: { Args: { p_user: string }; Returns: string }
+      chat_peer_status: { Args: { p_user: string }; Returns: Json }
+      chat_pin: {
+        Args: { p_message_id: string; p_pinned?: boolean }
+        Returns: {
+          body: string
+          client_id: string | null
+          conversation_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          forward_from_id: string | null
+          forward_from_name: string | null
+          id: string
+          items: Json | null
+          kind: string
+          media: Json
+          media_path: string | null
+          pinned_at: string | null
+          pinned_by: string | null
+          reactions: Json
+          reply_to_id: string | null
+          sender_id: string | null
+          share: Json | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      chat_profile: { Args: { p_user: string }; Returns: Json }
+      chat_protect_history: {
+        Args: { p_conversation_id: string; p_on: boolean }
+        Returns: boolean
+      }
+      chat_react: {
+        Args: { p_emoji: string; p_message_id: string }
+        Returns: Json
+      }
+      chat_report: {
+        Args: {
+          p_conversation_id: string
+          p_message_id?: string
+          p_note?: string
+          p_reason: string
+        }
+        Returns: string
+      }
+      chat_send: {
+        Args: {
+          p_body?: string
+          p_client_id?: string
+          p_conversation_id: string
+          p_items?: Json
+          p_kind: string
+          p_media?: Json
+          p_media_path?: string
+          p_reply_to?: string
+          p_share?: Json
+        }
+        Returns: {
+          body: string
+          client_id: string | null
+          conversation_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          forward_from_id: string | null
+          forward_from_name: string | null
+          id: string
+          items: Json | null
+          kind: string
+          media: Json
+          media_path: string | null
+          pinned_at: string | null
+          pinned_by: string | null
+          reactions: Json
+          reply_to_id: string | null
+          sender_id: string | null
+          share: Json | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      chat_touch: { Args: { p_online?: boolean }; Returns: undefined }
+      chat_unblock: { Args: { p_user: string }; Returns: undefined }
+      chat_unread_total: { Args: never; Returns: number }
       claim_telegram_image_update: {
         Args: { p_update_id: number }
         Returns: boolean
       }
       cleanup_telegram_image_sessions: { Args: never; Returns: Json }
+      coin_fee_quote: {
+        Args: { p_amount: number; p_scope: string }
+        Returns: Json
+      }
+      coin_sales_settings: { Args: never; Returns: Json }
       coins_for_pages: {
         Args: { p_pages: number; p_rate: Json }
         Returns: number
@@ -7317,6 +8658,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      defense_edit: {
+        Args: {
+          p_index: number
+          p_part: string
+          p_presentation_id: string
+          p_text: string
+        }
+        Returns: Json
       }
       device_alerts: {
         Args: never
@@ -7409,6 +8759,19 @@ export type Database = {
         Args: { p_game_id: string; p_user_id?: string }
         Returns: boolean
       }
+      game_crossword_progress: {
+        Args: { p_question_index: number; p_session_id: string }
+        Returns: Json
+      }
+      game_crossword_submit: {
+        Args: {
+          p_payload: Json
+          p_player: Database["public"]["Tables"]["game_players"]["Row"]
+          p_question_index: number
+          p_session: Database["public"]["Tables"]["game_sessions"]["Row"]
+        }
+        Returns: Json
+      }
       game_grade_answer: {
         Args: {
           p_payload: Json
@@ -7420,10 +8783,73 @@ export type Database = {
           score: number
         }[]
       }
+      game_grid_close: { Args: { p_session_id: string }; Returns: Json }
+      game_grid_finish: { Args: { p_session_id: string }; Returns: Json }
+      game_grid_judge: {
+        Args: { p_correct: boolean; p_session_id: string }
+        Returns: Json
+      }
+      game_grid_open: {
+        Args: { p_cell: number; p_session_id: string }
+        Returns: Json
+      }
+      game_grid_reveal: { Args: { p_session_id: string }; Returns: Json }
+      game_grid_session: {
+        Args: { p_session_id: string }
+        Returns: {
+          allow_late_join: boolean
+          created_at: string
+          current_index: number
+          ended_at: string | null
+          expires_at: string
+          game_id: string | null
+          grid: Json | null
+          host_user_id: string | null
+          id: string
+          join_code: string
+          join_token: string
+          last_advance_at: string | null
+          mafia: Json | null
+          phase_deadline: string | null
+          player_count: number
+          question_ids: string[]
+          question_started_at: string | null
+          realtime_token: string
+          reward_plan: Json
+          reward_reserved: number
+          reward_state: string
+          screen_token_hash: string | null
+          show_on_phones: boolean
+          sound_enabled: boolean
+          started_at: string | null
+          state_version: number
+          status: Database["public"]["Enums"]["game_session_status"]
+          team_mode: boolean
+          teams: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "game_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      game_grid_start: {
+        Args: { p_session_id: string; p_teams: string[] }
+        Returns: Json
+      }
+      game_grid_view: {
+        Args: {
+          p_host: boolean
+          p_session: Database["public"]["Tables"]["game_sessions"]["Row"]
+        }
+        Returns: Json
+      }
       game_host_review_answer: {
         Args: { p_answer_id: string; p_is_correct: boolean }
         Returns: Json
       }
+      game_host_screen: { Args: { p_session_id: string }; Returns: Json }
       game_host_state: { Args: { p_session_id: string }; Returns: Json }
       game_hostable_list: {
         Args: never
@@ -7445,16 +8871,109 @@ export type Database = {
         Returns: boolean
       }
       game_join: {
-        Args: { p_avatar_id?: number; p_join_token: string; p_nickname: string }
+        Args: {
+          p_avatar_id?: number
+          p_join_token: string
+          p_nickname: string
+          p_team?: string
+        }
         Returns: Json
       }
       game_join_by_code: {
-        Args: { p_avatar_id?: number; p_code: string; p_nickname: string }
+        Args: {
+          p_avatar_id?: number
+          p_code: string
+          p_nickname: string
+          p_team?: string
+        }
         Returns: Json
       }
       game_join_info: { Args: { p_join_token: string }; Returns: Json }
+      game_join_preview: {
+        Args: { p_code?: string; p_join_token?: string }
+        Returns: Json
+      }
       game_leaderboard_rows: { Args: { p_session_id: string }; Returns: Json }
       game_listing_preview: { Args: { p_product_id: string }; Returns: Json }
+      game_mafia_close: { Args: { p_session_id: string }; Returns: Json }
+      game_mafia_deal: {
+        Args: { p_roles: Json; p_session_id: string }
+        Returns: Json
+      }
+      game_mafia_end: {
+        Args: { p_session_id: string; p_winner?: string }
+        Returns: Json
+      }
+      game_mafia_game: { Args: { p_language?: string }; Returns: string }
+      game_mafia_is_mafia: { Args: { p_role: string }; Returns: boolean }
+      game_mafia_mark: {
+        Args: {
+          p_alive: boolean
+          p_player_id: string
+          p_reason?: string
+          p_session_id: string
+        }
+        Returns: Json
+      }
+      game_mafia_phase: {
+        Args: { p_phase: string; p_session_id: string }
+        Returns: Json
+      }
+      game_mafia_running: {
+        Args: {
+          p_session: Database["public"]["Tables"]["game_sessions"]["Row"]
+        }
+        Returns: undefined
+      }
+      game_mafia_seen: { Args: { p_session_id: string }; Returns: undefined }
+      game_mafia_session: {
+        Args: { p_session_id: string }
+        Returns: {
+          allow_late_join: boolean
+          created_at: string
+          current_index: number
+          ended_at: string | null
+          expires_at: string
+          game_id: string | null
+          grid: Json | null
+          host_user_id: string | null
+          id: string
+          join_code: string
+          join_token: string
+          last_advance_at: string | null
+          mafia: Json | null
+          phase_deadline: string | null
+          player_count: number
+          question_ids: string[]
+          question_started_at: string | null
+          realtime_token: string
+          reward_plan: Json
+          reward_reserved: number
+          reward_state: string
+          screen_token_hash: string | null
+          show_on_phones: boolean
+          sound_enabled: boolean
+          started_at: string | null
+          state_version: number
+          status: Database["public"]["Enums"]["game_session_status"]
+          team_mode: boolean
+          teams: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "game_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      game_mafia_view: {
+        Args: {
+          p_player?: string
+          p_session: Database["public"]["Tables"]["game_sessions"]["Row"]
+          p_viewer: string
+        }
+        Returns: Json
+      }
       game_my_stats: { Args: never; Returns: Json }
       game_new_join_code: { Args: never; Returns: string }
       game_normalize_text: { Args: { p_value: string }; Returns: string }
@@ -7506,12 +9025,14 @@ export type Database = {
         Args: { p_screen_token: string; p_session_id: string }
         Returns: Json
       }
+      game_screen_state: { Args: { p_session_id: string }; Returns: Json }
       game_session_advance: {
         Args: { p_action?: string; p_session_id: string }
         Returns: Json
       }
       game_session_configure: {
         Args: {
+          p_allow_late_join?: boolean
           p_game_id?: string
           p_reward_plan?: Json
           p_session_id: string
@@ -7528,6 +9049,16 @@ export type Database = {
           p_game_id: string
           p_status: Database["public"]["Enums"]["game_status"]
         }
+        Returns: Json
+      }
+      game_store_autopublish_enabled: { Args: never; Returns: boolean }
+      game_store_autopublish_stop: {
+        Args: { p_game_id: string }
+        Returns: Json
+      }
+      game_store_publish_due: { Args: { p_limit?: number }; Returns: number }
+      game_store_reprice: {
+        Args: { p_game_id: string; p_price: number }
         Returns: Json
       }
       game_submit_answer: {
@@ -7705,10 +9236,22 @@ export type Database = {
         }
         Returns: string
       }
+      marketplace_buy_with_coins: {
+        Args: {
+          p_expected_price: number
+          p_idempotency_key: string
+          p_platform?: string
+          p_product_id: string
+          p_refund_acknowledged?: boolean
+        }
+        Returns: Json
+      }
       marketplace_can_see_product: {
         Args: { p_product_id: string; p_user_id?: string }
         Returns: boolean
       }
+      marketplace_claim_free: { Args: { p_product_id: string }; Returns: Json }
+      marketplace_coin_quote: { Args: { p_product_id: string }; Returns: Json }
       marketplace_create_checkout: {
         Args: {
           p_idempotency_key: string
@@ -7793,6 +9336,10 @@ export type Database = {
           p_seller_id?: string
           p_sort?: string
         }
+        Returns: Json
+      }
+      marketplace_set_coin_price: {
+        Args: { p_coin_price: number; p_product_id: string }
         Returns: Json
       }
       marketplace_settle_and_remember_card: {
@@ -8187,6 +9734,11 @@ export type Database = {
         Args: { p_owner: string; p_presentation_id: string }
         Returns: string
       }
+      presentation_ad_pages: {
+        Args: { p_ads: number; p_pages: number }
+        Returns: number
+      }
+      presentation_ads_for: { Args: { p_owner: string }; Returns: Json }
       presentation_apply_command: {
         Args: { p_command: string; p_session_id: string; p_value?: number }
         Returns: {
@@ -8296,7 +9848,11 @@ export type Database = {
       }
       presentation_session_open: { Args: never; Returns: Json }
       presentation_session_set_deck: {
-        Args: { p_presentation_id: string; p_session_id: string }
+        Args: {
+          p_presentation_id: string
+          p_session_id: string
+          p_with_ads?: boolean
+        }
         Returns: {
           created_at: string
           current_slide: number
@@ -8359,6 +9915,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      promo_track: {
+        Args: { p_event: string; p_promo_id: string }
+        Returns: undefined
+      }
       purge_account_data: { Args: { p_user: string }; Returns: Json }
       purge_expired_game_sessions: { Args: never; Returns: number }
       purge_expired_presentation_sessions: { Args: never; Returns: number }
@@ -8367,6 +9927,37 @@ export type Database = {
         Returns: Json
       }
       purge_stale_orders: { Args: never; Returns: number }
+      push_chat_preview: {
+        Args: {
+          p_body: string
+          p_kind: string
+          p_language: string
+          p_share: Json
+        }
+        Returns: string
+      }
+      push_kick: { Args: never; Returns: undefined }
+      push_outbox_claim: {
+        Args: { p_limit?: number }
+        Returns: {
+          body: string
+          channel: string
+          data: Json
+          id: number
+          title: string
+          tokens: string[]
+        }[]
+      }
+      push_outbox_finish: {
+        Args: { p_dead_tokens: string[]; p_failed: Json; p_sent: number[] }
+        Returns: undefined
+      }
+      push_reachable: { Args: { p_user: string }; Returns: boolean }
+      push_token_register: {
+        Args: { p_device?: string; p_platform: string; p_token: string }
+        Returns: undefined
+      }
+      push_token_unregister: { Args: { p_token: string }; Returns: undefined }
       quota_consume: {
         Args: { p_amount?: number; p_feature_key: string; p_user_id?: string }
         Returns: Json
@@ -8536,6 +10127,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      site_page_person: { Args: { p_user: string }; Returns: string }
+      site_page_translations: {
+        Args: { p_limit: number; p_value: Json }
+        Returns: Json
+      }
       start_generation: {
         Args: {
           p_author_name?: string
@@ -8640,6 +10236,31 @@ export type Database = {
         Returns: Json
       }
       survey_results_summary: { Args: { p_form_id: string }; Returns: Json }
+      test_save_result: {
+        Args: {
+          p_answers: Json
+          p_source?: string
+          p_student_name: string
+          p_test_id: string
+        }
+        Returns: {
+          answers: Json
+          created_at: string
+          id: string
+          owner_id: string
+          score: number
+          source: string
+          student_name: string
+          test_id: string
+          total: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "test_results"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       transfer_credits: {
         Args: {
           p_amount: number
@@ -8750,6 +10371,7 @@ export type Database = {
         | "open_answer"
         | "image_quiz"
         | "hotspot"
+        | "crossword"
       game_session_status:
         | "lobby"
         | "countdown"
@@ -8808,6 +10430,8 @@ export type Database = {
         | "marathon_milestone"
         | "support_reply"
         | "new_device"
+        | "game_store_autopublish"
+        | "game_store_published"
       order_purpose:
         | "subscription"
         | "jcoin"
@@ -9096,6 +10720,7 @@ export const Constants = {
         "open_answer",
         "image_quiz",
         "hotspot",
+        "crossword",
       ],
       game_session_status: [
         "lobby",
@@ -9158,6 +10783,8 @@ export const Constants = {
         "marathon_milestone",
         "support_reply",
         "new_device",
+        "game_store_autopublish",
+        "game_store_published",
       ],
       order_purpose: [
         "subscription",
